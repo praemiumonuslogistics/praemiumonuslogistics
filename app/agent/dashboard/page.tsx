@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function getSupabase(): SupabaseClient | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 export default function AgentDashboard() {
   const [loads, setLoads] = useState<any[]>([]);
@@ -20,12 +22,18 @@ export default function AgentDashboard() {
   const [phone, setPhone] = useState('');
 
   useEffect(() => {
-    fetchLoads();
+    const supabase = getSupabase();
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    fetchLoads(supabase);
 
     const channel = supabase
       .channel('agent-dashboard-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'loads' }, () => {
-        fetchLoads();
+        fetchLoads(supabase);
       })
       .subscribe();
 
@@ -34,7 +42,9 @@ export default function AgentDashboard() {
     };
   }, []);
 
-  async function fetchLoads() {
+  async function fetchLoads(client?: SupabaseClient) {
+    const supabase = client || getSupabase();
+    if (!supabase) return;
     const { data } = await supabase.from('loads').select('*').order('created_at', { ascending: false });
     if (data) setLoads(data);
     setLoading(false);
@@ -42,6 +52,9 @@ export default function AgentDashboard() {
 
   async function createLoad(e: React.FormEvent) {
     e.preventDefault();
+    const supabase = getSupabase();
+    if (!supabase) return;
+
     const { error } = await supabase.from('loads').insert([
       {
         landstar_pro_number: proNumber,
@@ -61,7 +74,7 @@ export default function AgentDashboard() {
       setDestination('');
       setDriver('');
       setPhone('');
-      fetchLoads();
+      fetchLoads(supabase);
     }
   }
 
