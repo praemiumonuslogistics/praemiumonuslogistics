@@ -38,6 +38,14 @@ export default function AboutPage() {
         </div>
 
         <div className="space-y-4 text-slate-300 leading-relaxed">
+          <h2 className="text-white text-xl font-bold">Operating authority.</h2>
+          <p>
+            Praemium Onus Logistics is Landstar Agent GNV. Freight moves under Landstar Ranger, Inc. authority:
+            MC-166960 · USDOT 241572.
+          </p>
+        </div>
+
+        <div className="space-y-4 text-slate-300 leading-relaxed">
           <h2 className="text-white text-xl font-bold">How we work.</h2>
           <p>
             We believe logistics is relationship work. Shippers get access to top-tier carriers. Every shipment is
