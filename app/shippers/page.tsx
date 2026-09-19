@@ -53,6 +53,37 @@ export default function ShippersPage() {
           </ol>
         </div>
 
+        <div className="space-y-5 border border-slate-800 rounded-2xl bg-slate-900/50 p-6 md:p-8">
+          <p className="text-xs font-semibold tracking-[0.2em] text-amber-400 uppercase">Named duty. Proof on file.</p>
+          <h2 className="text-3xl md:text-4xl font-black tracking-tight">Zero Pride, Pure Proof</h2>
+          <p className="text-slate-300">
+            Pride is the check-call. Proof is the stream. Praemium Onus Logistics, an independent Landstar freight
+            agent in Las Vegas, holds every driver to one standard: location and documents in the open.
+          </p>
+          <p className="text-slate-400">
+            You do not wait on a dispatcher to get an update. Agent Darrell L. Garner’s duty is to put the load in
+            front of you—unfiltered, around the clock. Authority belongs to Landstar Ranger, Inc., Jacksonville, FL,
+            MC-166960 · USDOT 241572. This agency does not own that office or that MC.
+          </p>
+          <p className="text-sm font-semibold text-white">Mandatory standard</p>
+          <ul className="space-y-2 text-slate-300">
+            <li className="border-l-2 border-amber-400 pl-4">Live GPS stream from the driver</li>
+            <li className="border-l-2 border-amber-400 pl-4">BOL uploaded at origin</li>
+            <li className="border-l-2 border-amber-400 pl-4">POD uploaded at destination</li>
+            <li className="border-l-2 border-amber-400 pl-4">24/7 unfiltered view</li>
+            <li className="border-l-2 border-amber-400 pl-4">No check-calls</li>
+          </ul>
+          <p className="text-lg text-white font-semibold">You do not chase updates.</p>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/track/shipper" className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-3 rounded-lg">
+              Shipper Tracking
+            </Link>
+            <Link href="/quote" className="border border-slate-700 hover:border-amber-400 px-5 py-3 rounded-lg font-semibold">
+              Request a shipper quote
+            </Link>
+          </div>
+        </div>
+
         <div className="flex flex-wrap gap-3">
           <Link href="/quote" className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-3 rounded-lg">
             Request a shipper quote

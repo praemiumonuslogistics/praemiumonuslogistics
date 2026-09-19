@@ -21,6 +21,9 @@ export function SiteFooter() {
             <Link href="/shippers" className="hover:text-amber-300">Shippers</Link>
             <Link href="/carriers" className="hover:text-amber-300">Carriers</Link>
             <Link href="/quote" className="hover:text-amber-300">Request a Quote</Link>
+            <Link href="/track/shipper" className="hover:text-amber-300">Shipper Tracking</Link>
+            <Link href="/track/receiver" className="hover:text-amber-300">Receiver Portal</Link>
+            <Link href="/track/driver" className="hover:text-amber-300">Driver App</Link>
           </div>
         </div>
         <div className="space-y-2">

@@ -122,10 +122,33 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-slate-900 border-y border-slate-800 py-10 px-4 md:px-8">
-        <div className="max-w-4xl mx-auto text-center space-y-4">
-          <h2 className="text-xl font-bold">Already shipping with us?</h2>
-          <p className="text-sm text-slate-400">Enter your tracking code for live GPS telemetry.</p>
+      <section className="bg-slate-900 border-y border-slate-800 py-12 px-4 md:px-8">
+        <div className="max-w-4xl mx-auto text-center space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black">24/7 Unfiltered Tracking. Zero-Pride Transparency.</h2>
+          <p className="text-sm md:text-base text-slate-400 max-w-2xl mx-auto">
+            Every load on this desk streams live GPS. Drivers upload BOL at origin and POD at destination.
+            Open a portal. Do not chase a phone.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link
+              href="/track/shipper"
+              className="border border-amber-400/40 text-amber-300 hover:bg-amber-400/10 font-semibold px-4 py-2 rounded-lg text-sm"
+            >
+              Shipper Tracking
+            </Link>
+            <Link
+              href="/track/receiver"
+              className="border border-amber-400/40 text-amber-300 hover:bg-amber-400/10 font-semibold px-4 py-2 rounded-lg text-sm"
+            >
+              Receiver Portal
+            </Link>
+            <Link
+              href="/track/driver"
+              className="border border-amber-400/40 text-amber-300 hover:bg-amber-400/10 font-semibold px-4 py-2 rounded-lg text-sm"
+            >
+              Driver App
+            </Link>
+          </div>
           <TrackBox />
         </div>
       </section>

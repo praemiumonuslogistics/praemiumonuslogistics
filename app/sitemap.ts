@@ -12,5 +12,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/carriers`, lastModified, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${baseUrl}/quote`, lastModified, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${baseUrl}/contact`, lastModified, changeFrequency: 'weekly', priority: 0.6 },
+    { url: `${baseUrl}/track/shipper`, lastModified, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/track/receiver`, lastModified, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${baseUrl}/track/driver`, lastModified, changeFrequency: 'weekly', priority: 0.7 },
   ];
 }
