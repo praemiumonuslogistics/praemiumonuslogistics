@@ -20,9 +20,22 @@ export default function HomePage() {
     },
     description:
       'Las Vegas freight brokerage. Landstar Agent GNV. FTL, LTL, and expedited freight with named-contact dispatch.',
+    employee: {
+      '@type': 'Person',
+      name: 'Darrell L. Garner',
+      jobTitle: 'Landstar Agent GNV',
+    },
     parentOrganization: {
       '@type': 'Organization',
       name: 'Landstar Ranger, Inc.',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: '13410 Sutton Park Dr S',
+        addressLocality: 'Jacksonville',
+        addressRegion: 'FL',
+        postalCode: '32224',
+        addressCountry: 'US',
+      },
       identifier: [
         { '@type': 'PropertyValue', name: 'MC Number', value: 'MC-166960' },
         { '@type': 'PropertyValue', name: 'USDOT', value: '241572' },
