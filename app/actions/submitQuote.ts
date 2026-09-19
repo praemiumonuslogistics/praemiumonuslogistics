@@ -2,6 +2,7 @@
 
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
+import { formatAddress } from '../lib/address';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -19,8 +20,14 @@ function escapeHtml(value: string) {
 }
 
 export async function submitQuoteAction(formData: {
-  origin: string;
-  destination: string;
+  originStreet: string;
+  originCity: string;
+  originState: string;
+  originZip: string;
+  destinationStreet: string;
+  destinationCity: string;
+  destinationState: string;
+  destinationZip: string;
   freightType: string;
   weight: string;
   companyName: string;
@@ -32,6 +39,18 @@ export async function submitQuoteAction(formData: {
   notes?: string;
 }) {
   try {
+    const origin = formatAddress({
+      street: formData.originStreet,
+      city: formData.originCity,
+      state: formData.originState,
+      zip: formData.originZip,
+    });
+    const destination = formatAddress({
+      street: formData.destinationStreet,
+      city: formData.destinationCity,
+      state: formData.destinationState,
+      zip: formData.destinationZip,
+    });
     const extraNotes = [
       formData.role ? `Role: ${formData.role}` : '',
       formData.name ? `Contact: ${formData.name}` : '',
@@ -46,8 +65,14 @@ export async function submitQuoteAction(formData: {
       .insert([
         {
           shipper_name: formData.companyName,
-          origin_city: formData.origin,
-          destination_city: formData.destination,
+          origin_street: formData.originStreet,
+          origin_city: formData.originCity,
+          origin_state: formData.originState,
+          origin_zip: formData.originZip,
+          destination_street: formData.destinationStreet,
+          destination_city: formData.destinationCity,
+          destination_state: formData.destinationState,
+          destination_zip: formData.destinationZip,
           freight_type: formData.freightType,
           weight: formData.weight,
           contact_email: formData.contactEmail,
@@ -69,7 +94,7 @@ export async function submitQuoteAction(formData: {
     await resend.emails.send({
       from: 'Praemium Onus Logistics <onboarding@resend.dev>',
       to: [recipientEmail],
-      subject: `New Freight Quote Request: ${formData.origin} → ${formData.destination}`,
+      subject: `New Freight Quote Request: ${origin} → ${destination}`,
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #0f172a; color: #f8fafc; border-radius: 12px;">
           <h2 style="color: #f59e0b; margin-bottom: 4px;">Praemium Onus Logistics</h2>
@@ -88,7 +113,7 @@ export async function submitQuoteAction(formData: {
             </tr>
             <tr>
               <td style="padding: 8px 0; font-weight: bold;">Lane:</td>
-              <td style="padding: 8px 0; color: #38bdf8;">${escapeHtml(formData.origin)} → ${escapeHtml(formData.destination)}</td>
+              <td style="padding: 8px 0; color: #38bdf8;">${escapeHtml(origin)} → ${escapeHtml(destination)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; font-weight: bold;">Equipment:</td>

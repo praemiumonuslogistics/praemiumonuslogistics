@@ -2,8 +2,9 @@
 
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getSupabase, type LoadRecord } from '../../../lib/supabaseBrowser';
-import { LoadDocs, ProofChips } from '../../../components/LoadProof';
+import { getSupabase, trackingStarted, type LoadRecord } from '../../../lib/supabaseBrowser';
+import { LoadAddress, LoadDocs, ProofChips } from '../../../components/LoadProof';
+import { TrackingMap } from '../../../components/TrackingMap';
 
 export default function ShipperTrackingPortal({
   params,
@@ -90,38 +91,29 @@ export default function ShipperTrackingPortal({
           <ProofChips load={load} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="border-l-4 border-blue-500 pl-4">
-              <p className="text-xs font-semibold text-slate-400 uppercase">Origin</p>
-              <p className="text-lg font-bold text-white">{load.origin_city}</p>
+              <LoadAddress
+                label="Origin"
+                street={load.origin_street}
+                city={load.origin_city}
+                state={load.origin_state}
+                zip={load.origin_zip}
+              />
             </div>
             <div className="border-l-4 border-emerald-500 pl-4">
-              <p className="text-xs font-semibold text-slate-400 uppercase">Destination</p>
-              <p className="text-lg font-bold text-white">{load.destination_city}</p>
+              <LoadAddress
+                label="Destination"
+                street={load.destination_street}
+                city={load.destination_city}
+                state={load.destination_state}
+                zip={load.destination_zip}
+              />
             </div>
           </div>
         </div>
 
         <div className="p-6 md:p-8 bg-slate-950 space-y-4">
-          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-            Real-Time Telemetry
-          </h2>
-          <div className="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm flex justify-between items-center">
-            <div>
-              <p className="text-xs text-slate-400">Current GPS Coordinates</p>
-              <p className="text-base font-mono font-semibold text-amber-400 mt-0.5">
-                {load.current_lat && load.current_lng
-                  ? `${load.current_lat}, ${load.current_lng}`
-                  : 'Awaiting GPS'}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-slate-400">Last Telemetry Ping</p>
-              <p className="text-xs font-semibold text-slate-300 mt-0.5">
-                {load.last_location_update
-                  ? new Date(load.last_location_update).toLocaleTimeString()
-                  : 'N/A'}
-              </p>
-            </div>
-          </div>
+          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Live map</h2>
+          <TrackingMap lat={load.current_lat} lng={load.current_lng} started={trackingStarted(load)} />
           <LoadDocs load={load} />
         </div>
 

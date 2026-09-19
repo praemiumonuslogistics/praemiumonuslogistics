@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { submitQuoteAction } from '../actions/submitQuote';
+import { AddressFields } from './AddressFields';
+import { formatAddress, isCompleteAddress, type AddressParts } from '../lib/address';
 
 const EQUIPMENT = [
   'Dry van',
@@ -17,14 +19,16 @@ const EQUIPMENT = [
 const inputClass =
   'w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-amber-400';
 
+const emptyAddress: AddressParts = { street: '', city: '', state: '', zip: '' };
+
 export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }) {
   const [name, setName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [role, setRole] = useState('Shipper');
-  const [origin, setOrigin] = useState('');
-  const [destination, setDestination] = useState('');
+  const [origin, setOrigin] = useState<AddressParts>(emptyAddress);
+  const [destination, setDestination] = useState<AddressParts>(emptyAddress);
   const [freightType, setFreightType] = useState('Dry van');
   const [weight, setWeight] = useState('');
   const [pickupDate, setPickupDate] = useState('');
@@ -35,6 +39,10 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isCompleteAddress(origin) || !isCompleteAddress(destination)) {
+      setError('Origin and destination need street, city, state, and ZIP.');
+      return;
+    }
     setLoading(true);
     setError('');
     const result = await submitQuoteAction({
@@ -43,8 +51,14 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
       contactEmail,
       contactPhone,
       role,
-      origin,
-      destination,
+      originStreet: origin.street || '',
+      originCity: origin.city || '',
+      originState: origin.state || '',
+      originZip: origin.zip || '',
+      destinationStreet: destination.street || '',
+      destinationCity: destination.city || '',
+      destinationState: destination.state || '',
+      destinationZip: destination.zip || '',
       freightType,
       weight,
       pickupDate,
@@ -66,7 +80,7 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
         <h3 className="font-bold text-lg">Request received.</h3>
         <p className="text-sm text-slate-300">
           Thank you. A Praemium Onus dispatcher will reply to {contactEmail} and {contactPhone}. Lane:{' '}
-          <strong>{origin}</strong> to <strong>{destination}</strong>.
+          <strong>{formatAddress(origin)}</strong> to <strong>{formatAddress(destination)}</strong>.
         </p>
       </div>
     );
@@ -90,16 +104,8 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label className="text-xs font-semibold text-slate-400 block mb-1">Origin</label>
-          <input required className={inputClass} value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="Las Vegas, NV" />
-        </div>
-        <div>
-          <label className="text-xs font-semibold text-slate-400 block mb-1">Destination</label>
-          <input required className={inputClass} value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="Dallas, TX" />
-        </div>
-      </div>
+      <AddressFields legend="Origin — full address with ZIP" value={origin} onChange={setOrigin} />
+      <AddressFields legend="Destination — full address with ZIP" value={destination} onChange={setDestination} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>

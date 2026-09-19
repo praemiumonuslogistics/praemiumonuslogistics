@@ -1,8 +1,9 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { getSupabase, type LoadRecord } from '../../../lib/supabaseBrowser';
+import { formatAddress } from '../../../lib/address';
+import { getSupabase, trackingStarted, type LoadRecord } from '../../../lib/supabaseBrowser';
 import { ProofChips } from '../../../components/LoadProof';
 
 function storageKey(hash: string) {
@@ -20,7 +21,9 @@ export default function DriverGPSPage({
   const [ready, setReady] = useState(false);
   const [lastPing, setLastPing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [uploading, setUploading] = useState<'bol' | 'pod' | null>(null);
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [notifying, setNotifying] = useState(false);
+  const watchRef = useRef<number | null>(null);
 
   useEffect(() => {
     const supabase = getSupabase();
@@ -42,7 +45,13 @@ export default function DriverGPSPage({
     fetchLoad();
   }, [hash]);
 
-  const startTracking = () => {
+  useEffect(() => {
+    return () => {
+      if (watchRef.current != null) navigator.geolocation.clearWatch(watchRef.current);
+    };
+  }, []);
+
+  function startGps() {
     const supabase = getSupabase();
     if (!supabase) {
       setError('Tracking service is not configured.');
@@ -52,20 +61,18 @@ export default function DriverGPSPage({
       setError('Geolocation is not supported by your mobile browser.');
       return;
     }
-
+    if (tracking) return;
     setTracking(true);
 
-    navigator.geolocation.watchPosition(
+    watchRef.current = navigator.geolocation.watchPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
         const now = new Date().toLocaleTimeString();
-
         const { error: updateError } = await supabase
           .from('loads')
           .update({
             current_lat: latitude,
             current_lng: longitude,
-            status: 'IN_TRANSIT',
             last_location_update: new Date().toISOString(),
           })
           .eq('tracking_hash', hash);
@@ -78,7 +85,6 @@ export default function DriverGPSPage({
                   ...prev,
                   current_lat: latitude,
                   current_lng: longitude,
-                  status: 'IN_TRANSIT',
                   last_location_update: new Date().toISOString(),
                 }
               : prev
@@ -88,9 +94,24 @@ export default function DriverGPSPage({
       (err) => setError(err.message),
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 10000 }
     );
-  };
+  }
 
-  async function uploadDoc(kind: 'bol' | 'pod', file: File) {
+  async function notify(event: 'pickup' | 'delivery') {
+    setNotifying(true);
+    try {
+      await fetch('/api/load-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hash, event }),
+      });
+    } catch {
+      setError('Load updated. Email alert could not send — dispatch will follow up.');
+    } finally {
+      setNotifying(false);
+    }
+  }
+
+  async function uploadFile(kind: 'bol' | 'pod' | 'pickup', file: File) {
     const supabase = getSupabase();
     const key = storageKey(hash);
     if (!supabase || !key) {
@@ -101,11 +122,12 @@ export default function DriverGPSPage({
     setUploading(kind);
     setError(null);
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
-    const path = `${key}/${kind}.${ext}`;
+    const path =
+      kind === 'pickup' ? `${key}/pickup/${Date.now()}.${ext}` : `${key}/${kind}.${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from('load-docs')
-      .upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' });
+      .upload(path, file, { upsert: kind !== 'pickup', contentType: file.type || 'image/jpeg' });
 
     if (uploadError) {
       setUploading(null);
@@ -116,10 +138,10 @@ export default function DriverGPSPage({
     const { data } = supabase.storage.from('load-docs').getPublicUrl(path);
     const url = `${data.publicUrl}?t=${Date.now()}`;
     const stamp = new Date().toISOString();
-    const patch =
-      kind === 'bol'
-        ? { bol_url: url, bol_uploaded_at: stamp }
-        : { pod_url: url, pod_uploaded_at: stamp };
+    let patch: Partial<LoadRecord>;
+    if (kind === 'bol') patch = { bol_url: url, bol_uploaded_at: stamp };
+    else if (kind === 'pod') patch = { pod_url: url, pod_uploaded_at: stamp };
+    else patch = { pickup_photo_urls: [...(load?.pickup_photo_urls || []), url] };
 
     const { error: rowError } = await supabase.from('loads').update(patch).eq('tracking_hash', hash);
     setUploading(null);
@@ -128,6 +150,47 @@ export default function DriverGPSPage({
       return;
     }
     setLoad((prev) => (prev ? { ...prev, ...patch } : prev));
+  }
+
+  async function confirmPickup() {
+    const supabase = getSupabase();
+    if (!supabase || !load) return;
+    if (!(load.pickup_photo_urls || []).length || !load.bol_url) {
+      setError('Photograph the load and the BOL at pickup before you confirm.');
+      return;
+    }
+    const stamp = new Date().toISOString();
+    const { error: rowError } = await supabase
+      .from('loads')
+      .update({ pickup_confirmed_at: stamp, status: 'IN_TRANSIT' })
+      .eq('tracking_hash', hash);
+    if (rowError) {
+      setError(rowError.message);
+      return;
+    }
+    setLoad((prev) => (prev ? { ...prev, pickup_confirmed_at: stamp, status: 'IN_TRANSIT' } : prev));
+    startGps();
+    await notify('pickup');
+  }
+
+  async function confirmDelivery() {
+    const supabase = getSupabase();
+    if (!supabase || !load) return;
+    if (!load.pod_url) {
+      setError('Photograph and upload the POD before you confirm drop-off.');
+      return;
+    }
+    const stamp = new Date().toISOString();
+    const { error: rowError } = await supabase
+      .from('loads')
+      .update({ delivered_at: stamp, status: 'DELIVERED' })
+      .eq('tracking_hash', hash);
+    if (rowError) {
+      setError(rowError.message);
+      return;
+    }
+    setLoad((prev) => (prev ? { ...prev, delivered_at: stamp, status: 'DELIVERED' } : prev));
+    await notify('delivery');
   }
 
   if (!ready) return <div className="p-6 text-center text-slate-400">Loading shipment data...</div>;
@@ -143,6 +206,22 @@ export default function DriverGPSPage({
     );
   }
 
+  const origin = formatAddress({
+    street: load.origin_street,
+    city: load.origin_city,
+    state: load.origin_state,
+    zip: load.origin_zip,
+  });
+  const destination = formatAddress({
+    street: load.destination_street,
+    city: load.destination_city,
+    state: load.destination_state,
+    zip: load.destination_zip,
+  });
+  const photoCount = load.pickup_photo_urls?.length || 0;
+  const pickedUp = Boolean(load.pickup_confirmed_at) || trackingStarted(load);
+  const delivered = Boolean(load.delivered_at) || load.status === 'DELIVERED';
+
   return (
     <div className="min-h-screen bg-slate-900 text-white p-6 max-w-md mx-auto flex flex-col gap-6 font-sans">
       <header className="border-b border-slate-800 pb-4 space-y-3">
@@ -150,9 +229,8 @@ export default function DriverGPSPage({
           PRAEMIUM ONUS DISPATCH
         </span>
         <h1 className="text-xl font-bold">Load #{load.landstar_pro_number || '—'}</h1>
-        <p className="text-slate-400 text-sm">
-          {load.origin_city} ➔ {load.destination_city}
-        </p>
+        <p className="text-slate-400 text-sm">{origin}</p>
+        <p className="text-slate-400 text-sm">➔ {destination}</p>
         <ProofChips load={load} />
       </header>
 
@@ -165,9 +243,7 @@ export default function DriverGPSPage({
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-lg text-sm">
-          {error}
-        </div>
+        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-lg text-sm">{error}</div>
       )}
 
       {lastPing && (
@@ -178,52 +254,75 @@ export default function DriverGPSPage({
       )}
 
       <div className="space-y-3">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">Document scanner</h2>
+        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">At pickup</h2>
         <ScanButton
+          id="scan-pickup"
+          label="Photograph the load"
+          hint={photoCount ? `${photoCount} on file — tap to add another` : 'Take photos of the freight on the truck'}
+          busy={uploading === 'pickup'}
+          done={photoCount > 0}
+          onFile={(file) => uploadFile('pickup', file)}
+        />
+        <ScanButton
+          id="scan-bol"
           label="Origin BOL"
-          kind="bol"
-          onFile={(file) => uploadDoc('bol', file)}
+          hint={load.bol_url ? 'On file — tap to replace' : 'Photograph the bill of lading'}
           busy={uploading === 'bol'}
           done={Boolean(load.bol_url)}
+          onFile={(file) => uploadFile('bol', file)}
         />
-        <ScanButton
-          label="Destination POD"
-          kind="pod"
-          onFile={(file) => uploadDoc('pod', file)}
-          busy={uploading === 'pod'}
-          done={Boolean(load.pod_url)}
-        />
+        <button
+          onClick={confirmPickup}
+          disabled={pickedUp || notifying}
+          className={`w-full py-4 text-base font-bold rounded-xl ${
+            pickedUp ? 'bg-emerald-600 cursor-default' : 'bg-amber-400 text-slate-950 hover:bg-amber-300'
+          }`}
+        >
+          {pickedUp ? 'Pickup confirmed · tracking live' : notifying ? 'Sending pickup emails…' : 'Confirm pickup & start tracking'}
+        </button>
       </div>
 
-      <button
-        onClick={startTracking}
-        disabled={tracking}
-        className={`w-full py-4 text-lg font-bold rounded-xl transition-all shadow-lg mt-auto ${
-          tracking
-            ? 'bg-emerald-600 text-white cursor-default'
-            : 'bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white'
-        }`}
-      >
-        {tracking ? '● Live Location Transmitting' : 'Start GPS Location Broadcast'}
-      </button>
+      <div className="space-y-3">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">At drop-off</h2>
+        <ScanButton
+          id="scan-pod"
+          label="Destination POD"
+          hint={load.pod_url ? 'On file — tap to replace' : 'Photograph proof of delivery'}
+          busy={uploading === 'pod'}
+          done={Boolean(load.pod_url)}
+          onFile={(file) => uploadFile('pod', file)}
+        />
+        <button
+          onClick={confirmDelivery}
+          disabled={!pickedUp || delivered || notifying}
+          className={`w-full py-4 text-base font-bold rounded-xl ${
+            delivered
+              ? 'bg-emerald-600 cursor-default'
+              : 'bg-blue-600 hover:bg-blue-500 disabled:opacity-40'
+          }`}
+        >
+          {delivered ? 'Drop-off confirmed' : notifying ? 'Sending delivery emails…' : 'Confirm drop-off'}
+        </button>
+      </div>
     </div>
   );
 }
 
 function ScanButton({
+  id,
   label,
-  kind,
+  hint,
   onFile,
   busy,
   done,
 }: {
+  id: string;
   label: string;
-  kind: 'bol' | 'pod';
+  hint: string;
   onFile: (file: File) => void;
   busy: boolean;
   done: boolean;
 }) {
-  const id = `scan-${kind}`;
   return (
     <label
       htmlFor={id}
@@ -231,12 +330,10 @@ function ScanButton({
     >
       <span>
         <span className="block font-semibold">{label}</span>
-        <span className="block text-xs text-slate-400">
-          {busy ? 'Uploading…' : done ? 'On file — tap to replace' : 'Photograph and upload'}
-        </span>
+        <span className="block text-xs text-slate-400">{busy ? 'Uploading…' : hint}</span>
       </span>
       <span className={`text-xs font-bold ${done ? 'text-emerald-400' : 'text-amber-400'}`}>
-        {done ? 'On file' : 'Scan'}
+        {done ? 'On file' : 'Camera'}
       </span>
       <input
         id={id}
