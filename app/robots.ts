@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/agent/', '/track/driver/', '/api/'],
     },
-    sitemap: 'https://praemiumonuslogistics.com/sitemap.xml',
+    sitemap: 'https://praemiumonuslogistics.vercel.app/sitemap.xml',
   };
 }
