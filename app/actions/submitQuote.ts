@@ -10,6 +10,14 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+function escapeHtml(value: string) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
+
 export async function submitQuoteAction(formData: {
   origin: string;
   destination: string;
@@ -18,8 +26,21 @@ export async function submitQuoteAction(formData: {
   companyName: string;
   contactEmail: string;
   contactPhone: string;
+  name?: string;
+  role?: string;
+  pickupDate?: string;
+  notes?: string;
 }) {
   try {
+    const extraNotes = [
+      formData.role ? `Role: ${formData.role}` : '',
+      formData.name ? `Contact: ${formData.name}` : '',
+      formData.pickupDate ? `Pickup: ${formData.pickupDate}` : '',
+      formData.notes || '',
+    ]
+      .filter(Boolean)
+      .join(' | ');
+
     const { data: loadData, error: dbError } = await supabase
       .from('loads')
       .insert([
@@ -31,6 +52,7 @@ export async function submitQuoteAction(formData: {
           weight: formData.weight,
           contact_email: formData.contactEmail,
           contact_phone: formData.contactPhone,
+          notes: extraNotes || null,
           status: 'QUOTE_REQUESTED',
         },
       ])
@@ -47,34 +69,46 @@ export async function submitQuoteAction(formData: {
     await resend.emails.send({
       from: 'Praemium Onus Logistics <onboarding@resend.dev>',
       to: [recipientEmail],
-      subject: `🚨 New Freight Quote Request: ${formData.origin} ➔ ${formData.destination}`,
+      subject: `New Freight Quote Request: ${formData.origin} → ${formData.destination}`,
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #0f172a; color: #f8fafc; border-radius: 12px;">
           <h2 style="color: #f59e0b; margin-bottom: 4px;">Praemium Onus Logistics</h2>
-          <p style="color: #94a3b8; font-size: 14px; margin-top: 0;">Landstar Agent Dispatch & Quote Notification</p>
-          
+          <p style="color: #94a3b8; font-size: 14px; margin-top: 0;">Landstar Agent GNV · Quote notification</p>
+
           <hr style="border-color: #334155; margin: 20px 0;" />
-          
+
           <table style="width: 100%; border-collapse: collapse; color: #f8fafc;">
             <tr>
-              <td style="padding: 8px 0; font-weight: bold; width: 140px;">Shipper Company:</td>
-              <td style="padding: 8px 0;">${formData.companyName}</td>
+              <td style="padding: 8px 0; font-weight: bold; width: 140px;">Company:</td>
+              <td style="padding: 8px 0;">${escapeHtml(formData.companyName)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold;">Contact:</td>
+              <td style="padding: 8px 0;">${escapeHtml(formData.name || '')} ${escapeHtml(formData.role || '')}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; font-weight: bold;">Lane:</td>
-              <td style="padding: 8px 0; color: #38bdf8;">${formData.origin} ➔ ${formData.destination}</td>
+              <td style="padding: 8px 0; color: #38bdf8;">${escapeHtml(formData.origin)} → ${escapeHtml(formData.destination)}</td>
             </tr>
             <tr>
-              <td style="padding: 8px 0; font-weight: bold;">Equipment Type:</td>
-              <td style="padding: 8px 0;">${formData.freightType} (${formData.weight ? formData.weight + ' lbs' : 'Weight unspecified'})</td>
+              <td style="padding: 8px 0; font-weight: bold;">Equipment:</td>
+              <td style="padding: 8px 0;">${escapeHtml(formData.freightType)} (${formData.weight ? escapeHtml(formData.weight) + ' lbs' : 'Weight unspecified'})</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold;">Pickup:</td>
+              <td style="padding: 8px 0;">${escapeHtml(formData.pickupDate || 'not given')}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; font-weight: bold;">Contact Email:</td>
-              <td style="padding: 8px 0;"><a href="mailto:${formData.contactEmail}" style="color: #fbbf24;">${formData.contactEmail}</a></td>
+              <td style="padding: 8px 0;"><a href="mailto:${escapeHtml(formData.contactEmail)}" style="color: #fbbf24;">${escapeHtml(formData.contactEmail)}</a></td>
             </tr>
             <tr>
               <td style="padding: 8px 0; font-weight: bold;">Contact Phone:</td>
-              <td style="padding: 8px 0;"><a href="tel:${formData.contactPhone}" style="color: #fbbf24;">${formData.contactPhone}</a></td>
+              <td style="padding: 8px 0;"><a href="tel:${escapeHtml(formData.contactPhone)}" style="color: #fbbf24;">${escapeHtml(formData.contactPhone)}</a></td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold;">Notes:</td>
+              <td style="padding: 8px 0;">${escapeHtml(formData.notes || '')}</td>
             </tr>
           </table>
 

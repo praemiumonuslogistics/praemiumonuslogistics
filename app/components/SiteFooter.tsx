@@ -49,15 +49,7 @@ export function SiteFooter() {
               LinkedIn
             </a>
           </p>
-          <p className="text-xs text-slate-500">
-            Agent: Darrell L. Garner · Landstar Agent GNV
-          </p>
-          <p className="text-xs text-slate-500">
-            Authority: Landstar Ranger, Inc. MC-166960 · USDOT 241572
-          </p>
-          <p className="text-xs text-slate-600">
-            13410 Sutton Park Dr S, Jacksonville, FL 32224
-          </p>
+          <p className="text-xs text-slate-600">MC TBD · DOT TBD · Street TBD</p>
         </div>
       </div>
       <p className="max-w-6xl mx-auto mt-8 text-xs text-slate-600">

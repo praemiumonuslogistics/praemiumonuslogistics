@@ -31,17 +31,9 @@ export default function AboutPage() {
         <div className="space-y-4 text-slate-300 leading-relaxed">
           <h2 className="text-white text-xl font-bold">Las Vegas headquarters.</h2>
           <p>
-            Praemium Onus Logistics is based in Las Vegas, Nevada. From here we cover regional and national lanes as
-            Landstar Agent GNV. The work is relationship-first: fewer accounts, more attention, no load left unexplained.
-          </p>
-        </div>
-
-        <div className="space-y-4 text-slate-300 leading-relaxed">
-          <h2 className="text-white text-xl font-bold">Operating authority.</h2>
-          <p>
-            Darrell L. Garner of Praemium Onus Logistics is an agent with Landstar Ranger, Inc. Freight moves under
-            Ranger authority: MC-166960 · USDOT 241572. Landstar Ranger, Inc., 13410 Sutton Park Dr S, Jacksonville, FL
-            32224.
+            We are based in Las Vegas, Nevada. From here we cover regional and national lanes as Landstar Agent GNV.
+            Street address is not published yet. The work is relationship-first: fewer accounts, more attention, no
+            load left unexplained.
           </p>
         </div>
 
