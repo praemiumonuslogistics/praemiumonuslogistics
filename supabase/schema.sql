@@ -60,6 +60,25 @@ create policy "anon_update_tracking"
 grant usage on schema public to anon, authenticated;
 grant select, insert, update on public.loads to anon, authenticated;
 
+create or replace function public.ensure_tracking_hash()
+returns trigger
+language plpgsql
+as $$
+begin
+  if (new.tracking_hash is null or btrim(new.tracking_hash) = '')
+     and new.status is distinct from 'QUOTE_REQUESTED' then
+    new.tracking_hash := encode(gen_random_bytes(12), 'hex');
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists loads_ensure_tracking_hash on public.loads;
+create trigger loads_ensure_tracking_hash
+before insert on public.loads
+for each row
+execute function public.ensure_tracking_hash();
+
 insert into storage.buckets (id, name, public)
 values ('load-docs', 'load-docs', true)
 on conflict (id) do nothing;

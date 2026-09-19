@@ -1,18 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { getSupabase, type LoadRecord } from '../../lib/supabaseBrowser';
 
-function getSupabase(): SupabaseClient | null {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key);
+function newTrackingHash() {
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 export default function AgentDashboard() {
-  const [loads, setLoads] = useState<any[]>([]);
+  const [loads, setLoads] = useState<LoadRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [proNumber, setProNumber] = useState('');
   const [shipper, setShipper] = useState('');
@@ -20,20 +20,22 @@ export default function AgentDashboard() {
   const [destination, setDestination] = useState('');
   const [driver, setDriver] = useState('');
   const [phone, setPhone] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const supabase = getSupabase();
     if (!supabase) {
       setLoading(false);
+      setError('Supabase is not configured.');
       return;
     }
 
-    fetchLoads(supabase);
+    fetchLoads();
 
     const channel = supabase
       .channel('agent-dashboard-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'loads' }, () => {
-        fetchLoads(supabase);
+        fetchLoads();
       })
       .subscribe();
 
@@ -42,40 +44,56 @@ export default function AgentDashboard() {
     };
   }, []);
 
-  async function fetchLoads(client?: SupabaseClient) {
-    const supabase = client || getSupabase();
+  async function fetchLoads() {
+    const supabase = getSupabase();
     if (!supabase) return;
-    const { data } = await supabase.from('loads').select('*').order('created_at', { ascending: false });
-    if (data) setLoads(data);
+    const { data, error: fetchError } = await supabase
+      .from('loads')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (fetchError) setError(fetchError.message);
+    if (data) setLoads(data as LoadRecord[]);
     setLoading(false);
   }
 
   async function createLoad(e: React.FormEvent) {
     e.preventDefault();
     const supabase = getSupabase();
-    if (!supabase) return;
+    if (!supabase) {
+      setError('Supabase is not configured.');
+      return;
+    }
 
-    const { error } = await supabase.from('loads').insert([
+    setSaving(true);
+    setError(null);
+    const trackingHash = newTrackingHash();
+
+    const { error: insertError } = await supabase.from('loads').insert([
       {
-        landstar_pro_number: proNumber,
-        shipper_name: shipper,
-        origin_city: origin,
-        destination_city: destination,
-        driver_name: driver,
-        driver_phone: phone,
+        landstar_pro_number: proNumber.trim(),
+        shipper_name: shipper.trim(),
+        origin_city: origin.trim(),
+        destination_city: destination.trim(),
+        driver_name: driver.trim() || null,
+        driver_phone: phone.trim() || null,
         status: 'BOOKED',
+        tracking_hash: trackingHash,
       },
     ]);
 
-    if (!error) {
-      setProNumber('');
-      setShipper('');
-      setOrigin('');
-      setDestination('');
-      setDriver('');
-      setPhone('');
-      fetchLoads(supabase);
+    setSaving(false);
+    if (insertError) {
+      setError(insertError.message);
+      return;
     }
+
+    setProNumber('');
+    setShipper('');
+    setOrigin('');
+    setDestination('');
+    setDriver('');
+    setPhone('');
+    fetchLoads();
   }
 
   return (
@@ -92,6 +110,12 @@ export default function AgentDashboard() {
             Active Loads: <span className="text-emerald-400 font-bold">{loads.length}</span>
           </div>
         </header>
+
+        {error ? (
+          <div className="bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 rounded-xl text-sm">
+            {error}
+          </div>
+        ) : null}
 
         <div className="bg-slate-800/60 border border-slate-700/60 p-6 rounded-2xl">
           <h2 className="text-lg font-bold mb-4 text-slate-200">Book & Dispatch New Freight</h2>
@@ -144,9 +168,10 @@ export default function AgentDashboard() {
             />
             <button
               type="submit"
-              className="md:col-span-3 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all"
+              disabled={saving}
+              className="md:col-span-3 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-60 text-white font-bold py-3 rounded-lg transition-all"
             >
-              Generate Tracking Links & Book Load
+              {saving ? 'Booking…' : 'Generate Tracking Links & Book Load'}
             </button>
           </form>
         </div>
@@ -168,40 +193,55 @@ export default function AgentDashboard() {
                     <th className="p-4">Shipper</th>
                     <th className="p-4">Route</th>
                     <th className="p-4">Status</th>
-                    <th className="p-4">Driver Link</th>
-                    <th className="p-4">Shipper Link</th>
+                    <th className="p-4">Code</th>
+                    <th className="p-4">Portals</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-700/50">
                   {loads.map((load) => (
-                    <tr key={load.id} className="hover:bg-slate-800/40">
+                    <tr key={load.id || load.tracking_hash || load.landstar_pro_number} className="hover:bg-slate-800/40">
                       <td className="p-4 font-mono font-bold text-amber-400">{load.landstar_pro_number}</td>
                       <td className="p-4">{load.shipper_name}</td>
-                      <td className="p-4">{load.origin_city} ➔ {load.destination_city}</td>
+                      <td className="p-4">
+                        {load.origin_city} ➔ {load.destination_city}
+                      </td>
                       <td className="p-4">
                         <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs px-2.5 py-1 rounded-md font-semibold">
                           {load.status}
                         </span>
                       </td>
+                      <td className="p-4 font-mono text-xs text-slate-400">{load.tracking_hash || '—'}</td>
                       <td className="p-4">
-                        <a
-                          href={`/track/driver/${load.tracking_hash}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-400 hover:underline text-xs"
-                        >
-                          Driver Mobile GPS ↗
-                        </a>
-                      </td>
-                      <td className="p-4">
-                        <a
-                          href={`/track/shipper/${load.tracking_hash}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-emerald-400 hover:underline text-xs"
-                        >
-                          Shipper Live View ↗
-                        </a>
+                        {load.tracking_hash ? (
+                          <div className="flex flex-col gap-1 text-xs">
+                            <a
+                              href={`/track/shipper/${load.tracking_hash}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-emerald-400 hover:underline"
+                            >
+                              Shipper Tracking ↗
+                            </a>
+                            <a
+                              href={`/track/receiver/${load.tracking_hash}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-amber-400 hover:underline"
+                            >
+                              Receiver Portal ↗
+                            </a>
+                            <a
+                              href={`/track/driver/${load.tracking_hash}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-400 hover:underline"
+                            >
+                              Driver App ↗
+                            </a>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-500">No tracking code</span>
+                        )}
                       </td>
                     </tr>
                   ))}

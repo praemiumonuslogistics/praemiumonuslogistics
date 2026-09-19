@@ -10,7 +10,9 @@ export function getSupabase(): SupabaseClient | null {
 }
 
 export type LoadRecord = {
+  id?: string;
   landstar_pro_number: string | null;
+  shipper_name?: string | null;
   origin_city: string | null;
   destination_city: string | null;
   driver_name: string | null;
