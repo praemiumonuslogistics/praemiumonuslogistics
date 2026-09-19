@@ -20,6 +20,14 @@ export default function HomePage() {
     },
     description:
       'Las Vegas freight brokerage. Landstar Agent GNV. FTL, LTL, and expedited freight with named-contact dispatch.',
+    parentOrganization: {
+      '@type': 'Organization',
+      name: 'Landstar Ranger, Inc.',
+      identifier: [
+        { '@type': 'PropertyValue', name: 'MC Number', value: 'MC-166960' },
+        { '@type': 'PropertyValue', name: 'USDOT', value: '241572' },
+      ],
+    },
   };
 
   return (

@@ -49,7 +49,10 @@ export function SiteFooter() {
               LinkedIn
             </a>
           </p>
-          <p className="text-xs text-slate-600">MC TBD · DOT TBD · Street TBD</p>
+          <p className="text-xs text-slate-500">
+            Authority: Landstar Ranger, Inc. MC-166960 · USDOT 241572
+          </p>
+          <p className="text-xs text-slate-600">Street TBD</p>
         </div>
       </div>
       <p className="max-w-6xl mx-auto mt-8 text-xs text-slate-600">
