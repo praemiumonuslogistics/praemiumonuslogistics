@@ -36,6 +36,7 @@ export async function submitQuoteAction(formData: {
   name?: string;
   role?: string;
   pickupDate?: string;
+  commodity?: string;
   notes?: string;
 }) {
   try {
@@ -55,6 +56,7 @@ export async function submitQuoteAction(formData: {
       formData.role ? `Role: ${formData.role}` : '',
       formData.name ? `Contact: ${formData.name}` : '',
       formData.pickupDate ? `Pickup: ${formData.pickupDate}` : '',
+      formData.commodity ? `Commodity: ${formData.commodity}` : '',
       formData.notes || '',
     ]
       .filter(Boolean)
@@ -74,6 +76,7 @@ export async function submitQuoteAction(formData: {
           destination_state: formData.destinationState,
           destination_zip: formData.destinationZip,
           freight_type: formData.freightType,
+          commodity: formData.commodity || null,
           weight: formData.weight,
           contact_email: formData.contactEmail,
           contact_phone: formData.contactPhone,
@@ -118,6 +121,10 @@ export async function submitQuoteAction(formData: {
             <tr>
               <td style="padding: 8px 0; font-weight: bold;">Equipment:</td>
               <td style="padding: 8px 0;">${escapeHtml(formData.freightType)} (${formData.weight ? escapeHtml(formData.weight) + ' lbs' : 'Weight unspecified'})</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold;">Commodity:</td>
+              <td style="padding: 8px 0;">${escapeHtml(formData.commodity || 'not given')}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; font-weight: bold;">Pickup:</td>

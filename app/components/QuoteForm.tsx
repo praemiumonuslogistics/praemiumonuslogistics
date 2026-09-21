@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { submitQuoteAction } from '../actions/submitQuote';
 import { AddressFields } from './AddressFields';
 import { formatAddress, isCompleteAddress, type AddressParts } from '../lib/address';
+import { COMMODITIES } from '../lib/bulkCsv';
 
 const EQUIPMENT = [
   'Dry van',
@@ -32,6 +33,7 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
   const [freightType, setFreightType] = useState('Dry van');
   const [weight, setWeight] = useState('');
   const [pickupDate, setPickupDate] = useState('');
+  const [commodity, setCommodity] = useState('General Freight');
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
@@ -39,8 +41,12 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isCompleteAddress(origin) || !isCompleteAddress(destination)) {
+    if (variant === 'full' && (!isCompleteAddress(origin) || !isCompleteAddress(destination))) {
       setError('Origin and destination need street, city, state, and ZIP.');
+      return;
+    }
+    if (variant === 'compact' && (!(origin.zip || '').trim() || !(destination.zip || '').trim())) {
+      setError('Origin ZIP and destination ZIP are required.');
       return;
     }
     setLoading(true);
@@ -62,6 +68,7 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
       freightType,
       weight,
       pickupDate,
+      commodity,
       notes,
     });
     setLoading(false);
@@ -104,8 +111,35 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
         </div>
       )}
 
-      <AddressFields legend="Origin — full address with ZIP" value={origin} onChange={setOrigin} />
-      <AddressFields legend="Destination — full address with ZIP" value={destination} onChange={setDestination} />
+      {variant === 'full' ? (
+        <>
+          <AddressFields legend="Origin — full address with ZIP" value={origin} onChange={setOrigin} />
+          <AddressFields legend="Destination — full address with ZIP" value={destination} onChange={setDestination} />
+        </>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-semibold text-slate-400 block mb-1">Origin ZIP</label>
+            <input
+              required
+              className={inputClass}
+              value={origin.zip || ''}
+              onChange={(e) => setOrigin({ ...origin, zip: e.target.value })}
+              placeholder="89101"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-400 block mb-1">Destination ZIP</label>
+            <input
+              required
+              className={inputClass}
+              value={destination.zip || ''}
+              onChange={(e) => setDestination({ ...destination, zip: e.target.value })}
+              placeholder="90021"
+            />
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
@@ -119,14 +153,22 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
           </select>
         </div>
         <div>
-          <label className="text-xs font-semibold text-slate-400 block mb-1">
-            {variant === 'full' ? 'Pickup date' : 'Est. weight (lbs)'}
-          </label>
-          {variant === 'full' ? (
-            <input type="date" required className={inputClass} value={pickupDate} onChange={(e) => setPickupDate(e.target.value)} />
-          ) : (
-            <input className={inputClass} value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="e.g. 42,000" />
-          )}
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Commodity</label>
+          <select className={inputClass} value={commodity} onChange={(e) => setCommodity(e.target.value)}>
+            {COMMODITIES.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Weight (lbs)</label>
+          <input required className={inputClass} value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="e.g. 42,000" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Pickup date</label>
+          <input type="date" required className={inputClass} value={pickupDate} onChange={(e) => setPickupDate(e.target.value)} />
         </div>
       </div>
 
@@ -147,21 +189,15 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
       </div>
 
       {variant === 'full' && (
-        <>
-          <div>
-            <label className="text-xs font-semibold text-slate-400 block mb-1">Est. weight (lbs)</label>
-            <input className={inputClass} value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="Weight, if known" />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-slate-400 block mb-1">Notes</label>
-            <textarea
-              className={`${inputClass} min-h-24`}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Weight, pieces, hours, constraints"
-            />
-          </div>
-        </>
+        <div>
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Notes</label>
+          <textarea
+            className={`${inputClass} min-h-24`}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Pieces, hours, constraints"
+          />
+        </div>
       )}
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}

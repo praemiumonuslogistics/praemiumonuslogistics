@@ -7,6 +7,7 @@ import { PageShell } from '../../components/PageShell';
 import { TrackingMap } from '../../components/TrackingMap';
 import { getSupabase, trackingStarted, type LoadRecord } from '../../lib/supabaseBrowser';
 import { dashboardPath, useAuth } from '../../lib/useAuth';
+import { COMMODITIES, parseBulkCsv } from '../../lib/bulkCsv';
 
 const inputClass =
   'w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-amber-400';
@@ -27,6 +28,7 @@ export default function ShipperDashboard() {
     rate: '',
     pickup: '',
     delivery: '',
+    commodity: 'General Freight',
   });
 
   useEffect(() => {
@@ -89,6 +91,7 @@ export default function ShipperDashboard() {
         weight: form.weight.trim(),
         rate_type: 'F',
         rate: Number(form.rate) || 0,
+        commodity: form.commodity,
         status: 'AVAILABLE',
         source: 'shipper_portal',
         yard_line: 0,
@@ -111,48 +114,22 @@ export default function ShipperDashboard() {
       rate: '',
       pickup: '',
       delivery: '',
+      commodity: 'General Freight',
     });
   }
 
   async function onCsv(file: File) {
     const supabase = getSupabase();
     if (!supabase || !user || !profile) return;
-    const text = await file.text();
-    const lines = text.split(/\r?\n/).filter(Boolean);
-    if (lines.length < 2) {
-      setError('CSV needs a header row and at least one load.');
-      return;
-    }
-    const headers = lines[0].split(',').map((h) => h.trim().toLowerCase());
-    const idx = (name: string) => headers.findIndex((h) => h.includes(name));
-    const rows = [];
-    for (const line of lines.slice(1)) {
-      const cols = line.split(',');
-      const originZip = cols[idx('origin zip')] || cols[idx('origin_zip')] || '';
-      const destZip = cols[idx('destination zip')] || cols[idx('dest')] || '';
-      if (!originZip || !destZip) continue;
-      rows.push({
-        shipper_id: user.id,
-        shipper_name: profile.company_name,
-        customer_id: cols[idx('customer')] || profile.company_name,
-        origin_city: cols[idx('origin city')] || null,
-        origin_zip: originZip.trim(),
-        origin_country: 'US',
-        destination_city: cols[idx('destination city')] || null,
-        destination_zip: destZip.trim(),
-        destination_country: 'US',
-        pickup_date_from: cols[idx('pickup')] || null,
-        equipment_1: (cols[idx('equipment')] || 'VAN').trim().toUpperCase(),
-        freight_type: (cols[idx('equipment')] || 'VAN').trim().toUpperCase(),
-        weight: cols[idx('weight')] || null,
-        rate_type: (cols[idx('rate type')] || 'F').trim().toUpperCase(),
-        rate: Number(cols[idx('rate')] || 0),
-        status: 'AVAILABLE',
-        source: 'shipper_csv',
-        yard_line: 0,
-        contact_email: user.email,
-      });
-    }
+    const rows = parseBulkCsv(await file.text()).map((row) => ({
+      ...row,
+      shipper_id: user.id,
+      shipper_name: profile.company_name,
+      customer_id: row.customer_id || profile.company_name,
+      status: 'AVAILABLE',
+      source: 'shipper_csv',
+      contact_email: user.email,
+    }));
     if (!rows.length) {
       setError('No valid CSV rows. Need origin and destination ZIP.');
       return;
@@ -190,6 +167,13 @@ export default function ShipperDashboard() {
           <input className={inputClass} type="date" required value={form.pickup} onChange={(e) => setForm({ ...form, pickup: e.target.value })} />
           <input className={inputClass} type="date" value={form.delivery} onChange={(e) => setForm({ ...form, delivery: e.target.value })} />
           <input className={inputClass} required placeholder="Rate (flat)" value={form.rate} onChange={(e) => setForm({ ...form, rate: e.target.value })} />
+          <select className={inputClass} value={form.commodity} onChange={(e) => setForm({ ...form, commodity: e.target.value })}>
+            {COMMODITIES.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
           <button disabled={saving} className="md:col-span-3 bg-amber-400 text-slate-950 font-bold py-3 rounded-lg">
             {saving ? 'Posting…' : 'Post as AVAILABLE'}
           </button>
@@ -198,8 +182,16 @@ export default function ShipperDashboard() {
         <div className="border border-slate-800 rounded-2xl p-6 space-y-3">
           <h2 className="text-lg font-bold">CSV bulk upload</h2>
           <p className="text-sm text-slate-400">
-            Headers should include origin zip, destination zip, equipment, weight, rate. Full Landstar workbooks still go through the agent bulk skill.
+            Use the Landstar bulk headers, including commodity. Uploads attach to this signed-in shipper account.
           </p>
+          <div className="flex flex-wrap gap-3">
+            <a href="/praemiumonuslogistics-bulk-template.csv" download className="text-sm text-amber-400 font-semibold">
+              Download bulk load template (.csv)
+            </a>
+            <a href="/praemiumonuslogisticsbulklistings.xlsx" download className="text-sm text-amber-400 font-semibold">
+              Download Landstar workbook (.xlsx)
+            </a>
+          </div>
           <input
             type="file"
             accept=".csv"
