@@ -4,10 +4,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PageShell } from '../../components/PageShell';
-import { FootballField } from '../../components/FootballField';
-import { getSupabase, type LoadRecord } from '../../lib/supabaseBrowser';
+import { TrackingMap } from '../../components/TrackingMap';
+import { getSupabase, trackingStarted, type LoadRecord } from '../../lib/supabaseBrowser';
 import { dashboardPath, useAuth } from '../../lib/useAuth';
-import { MILESTONES } from '../../lib/yardLine';
 
 const inputClass =
   'w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-amber-400';
@@ -233,10 +232,12 @@ export default function ShipperDashboard() {
                     </Link>
                   ) : null}
                 </div>
-                <FootballField load={load} compact />
-                <p className="text-xs text-slate-500">
-                  {MILESTONES.find((m) => (load.yard_line || 0) >= m.yards)?.label}
-                </p>
+                <TrackingMap
+                  lat={load.current_lat}
+                  lng={load.current_lng}
+                  started={trackingStarted(load)}
+                  lastUpdate={load.last_location_update}
+                />
               </article>
             ))
           )}

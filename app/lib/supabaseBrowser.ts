@@ -61,9 +61,6 @@ export type LoadRecord = {
 
 export function trackingStarted(load: LoadRecord) {
   return Boolean(
-    load.pickup_confirmed_at ||
-      load.status === 'IN_TRANSIT' ||
-      load.status === 'DELIVERED' ||
-      (typeof load.yard_line === 'number' && load.yard_line >= 25)
+    load.pickup_confirmed_at || load.status === 'IN_TRANSIT' || load.status === 'DELIVERED'
   );
 }

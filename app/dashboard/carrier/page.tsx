@@ -3,10 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageShell } from '../../components/PageShell';
-import { FootballField } from '../../components/FootballField';
-import { getSupabase, type LoadRecord } from '../../lib/supabaseBrowser';
+import { TrackingMap } from '../../components/TrackingMap';
+import { getSupabase, trackingStarted, type LoadRecord } from '../../lib/supabaseBrowser';
 import { dashboardPath, useAuth } from '../../lib/useAuth';
-import { MILESTONES } from '../../lib/yardLine';
+
+const STEPS = [
+  { status: 'ACCEPTED', label: 'Accepted at origin' },
+  { status: 'IN_TRANSIT', label: 'Picked up / rolling' },
+  { status: 'DELIVERED', label: 'Delivered' },
+] as const;
 
 export default function CarrierDashboard() {
   const router = useRouter();
@@ -57,20 +62,20 @@ export default function CarrierDashboard() {
     setBusy(load.id);
     const { error: upd } = await supabase
       .from('loads')
-      .update({ carrier_id: user.id, status: 'ACCEPTED', yard_line: 0 })
+      .update({ carrier_id: user.id, status: 'ACCEPTED' })
       .eq('id', load.id)
       .eq('status', 'AVAILABLE');
     setBusy(null);
     if (upd) setError(upd.message);
   }
 
-  async function advance(load: LoadRecord, yards: number, status: string) {
+  async function advance(load: LoadRecord, status: string) {
     const supabase = getSupabase();
     if (!supabase || !load.id) return;
     setBusy(load.id);
-    const patch: Record<string, unknown> = { yard_line: yards, status };
-    if (yards >= 25) patch.pickup_confirmed_at = new Date().toISOString();
-    if (yards >= 100) patch.delivered_at = new Date().toISOString();
+    const patch: Record<string, unknown> = { status };
+    if (status === 'IN_TRANSIT') patch.pickup_confirmed_at = new Date().toISOString();
+    if (status === 'DELIVERED') patch.delivered_at = new Date().toISOString();
     const { error: upd } = await supabase.from('loads').update(patch).eq('id', load.id);
     setBusy(null);
     if (upd) setError(upd.message);
@@ -132,16 +137,21 @@ export default function CarrierDashboard() {
                 <p className="font-bold">
                   {load.origin_city || load.origin_zip} → {load.destination_city || load.destination_zip} · {load.status}
                 </p>
-                <FootballField load={load} />
+                <TrackingMap
+                  lat={load.current_lat}
+                  lng={load.current_lng}
+                  started={trackingStarted(load)}
+                  lastUpdate={load.last_location_update}
+                />
                 <div className="flex flex-wrap gap-2">
-                  {MILESTONES.map((m) => (
+                  {STEPS.map((m) => (
                     <button
-                      key={m.yards}
+                      key={m.status}
                       disabled={busy === load.id}
-                      onClick={() => advance(load, m.yards, m.status)}
+                      onClick={() => advance(load, m.status)}
                       className="text-xs font-semibold border border-slate-700 hover:border-amber-400 rounded-lg px-3 py-2"
                     >
-                      {m.yards} · {m.label}
+                      {m.label}
                     </button>
                   ))}
                 </div>
