@@ -3,6 +3,7 @@
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 import { formatAddress } from '../lib/address';
+import { flagsForDims } from '../lib/openDeck';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -37,6 +38,16 @@ export async function submitQuoteAction(formData: {
   role?: string;
   pickupDate?: string;
   commodity?: string;
+  lengthFt?: string;
+  widthFt?: string;
+  heightFt?: string;
+  tarpSize?: string;
+  chainsRequired?: boolean;
+  strapsRequired?: boolean;
+  edgeProtectors?: boolean;
+  coilRacks?: boolean;
+  levelers?: boolean;
+  loadingAccess?: string;
   notes?: string;
 }) {
   try {
@@ -57,6 +68,11 @@ export async function submitQuoteAction(formData: {
       formData.name ? `Contact: ${formData.name}` : '',
       formData.pickupDate ? `Pickup: ${formData.pickupDate}` : '',
       formData.commodity ? `Commodity: ${formData.commodity}` : '',
+      formData.lengthFt || formData.widthFt || formData.heightFt
+        ? `Dims: ${formData.lengthFt || '?'}L x ${formData.widthFt || '?'}W x ${formData.heightFt || '?'}H ft`
+        : '',
+      formData.tarpSize ? `Tarp: ${formData.tarpSize}` : '',
+      formData.loadingAccess ? `Loading: ${formData.loadingAccess}` : '',
       formData.notes || '',
     ]
       .filter(Boolean)
@@ -76,8 +92,26 @@ export async function submitQuoteAction(formData: {
           destination_state: formData.destinationState,
           destination_zip: formData.destinationZip,
           freight_type: formData.freightType,
+          equipment_1: formData.freightType,
           commodity: formData.commodity || null,
           weight: formData.weight,
+          length_ft: formData.lengthFt ? Number(formData.lengthFt) : null,
+          width_ft: formData.widthFt ? Number(formData.widthFt) : null,
+          height_ft: formData.heightFt ? Number(formData.heightFt) : null,
+          tarp_size: formData.tarpSize || null,
+          chains_required: Boolean(formData.chainsRequired),
+          straps_required: Boolean(formData.strapsRequired),
+          edge_protectors: Boolean(formData.edgeProtectors),
+          coil_racks: Boolean(formData.coilRacks),
+          levelers: Boolean(formData.levelers),
+          loading_access: formData.loadingAccess || null,
+          oversize_flag: flagsForDims(Number(formData.widthFt) || 0, Number(formData.heightFt) || 0, formData.freightType)
+            .oversize,
+          stepdeck_required_flag: flagsForDims(
+            Number(formData.widthFt) || 0,
+            Number(formData.heightFt) || 0,
+            formData.freightType
+          ).stepdeckRequired,
           contact_email: formData.contactEmail,
           contact_phone: formData.contactPhone,
           notes: extraNotes || null,
@@ -125,6 +159,10 @@ export async function submitQuoteAction(formData: {
             <tr>
               <td style="padding: 8px 0; font-weight: bold;">Commodity:</td>
               <td style="padding: 8px 0;">${escapeHtml(formData.commodity || 'not given')}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold;">Dims:</td>
+              <td style="padding: 8px 0;">${escapeHtml(formData.lengthFt || '?')}L × ${escapeHtml(formData.widthFt || '?')}W × ${escapeHtml(formData.heightFt || '?')}H ft · tarp ${escapeHtml(formData.tarpSize || 'NONE')}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; font-weight: bold;">Pickup:</td>

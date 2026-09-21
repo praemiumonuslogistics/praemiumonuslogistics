@@ -19,7 +19,7 @@ export default function HomePage() {
       addressCountry: 'US',
     },
     description:
-      'Las Vegas freight brokerage. Landstar Agent GNV. FTL, LTL, and expedited freight with named-contact dispatch.',
+      'Las Vegas open-deck brokerage. Landstar Agent GNV. Flatbed, stepdeck, and RGN with named-contact dispatch.',
     employee: {
       '@type': 'Person',
       name: 'Darrell L. Garner',
@@ -50,19 +50,22 @@ export default function HomePage() {
       <section className="px-4 md:px-8 py-12 md:py-20 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
         <div className="lg:col-span-7 space-y-6">
           <div className="inline-flex items-center space-x-2 bg-amber-400/10 border border-amber-400/20 text-amber-400 text-xs font-bold px-3 py-1.5 rounded-full">
-            <span>Landstar Agent GNV · Las Vegas</span>
+            <span>Specialized Flatbed &amp; Stepdeck Operations · Landstar Agent GNV</span>
           </div>
           <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight">
-            Freight moved with care.{' '}
+            Open-deck freight. Precise securement.{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200">
               Duty included.
             </span>
           </h1>
           <p className="text-slate-400 text-base md:text-lg leading-relaxed">
-            Praemium Onus Logistics is a Las Vegas brokerage. We give shippers access to top-tier carriers and treat
-            every load as a responsibility, not a transaction.
+            Praemium Onus Logistics is a Las Vegas open-deck brokerage. Flatbed, stepdeck, dropdeck, Conestoga, and RGN
+            — treated as a responsibility, not a transaction.
           </p>
-          <p className="text-slate-300">Full truckload. LTL. Expedited. Dedicated lanes. One team that dots every i and crosses every t.</p>
+          <p className="text-slate-300">
+            Exclusively serving Open-Deck Freight: Standard Flatbeds (48 ft / 53 ft), Stepdecks, Dropdecks, Conestogas,
+            and RGN Heavy Haul.
+          </p>
           <div className="flex flex-wrap gap-3">
             <Link href="/quote" className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-3 rounded-lg">
               Request a quote
@@ -74,8 +77,8 @@ export default function HomePage() {
         </div>
 
         <div id="quote" className="lg:col-span-5 bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-2xl shadow-2xl">
-          <h2 className="text-xl font-bold text-white mb-2">Request a freight quote</h2>
-          <p className="text-xs text-slate-400 mb-6">Send origin, destination, and equipment. We reply with a plan.</p>
+          <h2 className="text-xl font-bold text-white mb-2">Request an open-deck quote</h2>
+          <p className="text-xs text-slate-400 mb-6">ZIPs, dimensions, tarp, and securement. We reply with a plan.</p>
           <QuoteForm variant="compact" />
         </div>
       </section>
@@ -93,7 +96,7 @@ export default function HomePage() {
             </article>
             <article className="border border-slate-800 rounded-2xl p-6 space-y-2">
               <h3 className="font-bold text-amber-400">Customized solutions</h3>
-              <p className="text-sm text-slate-400">Weight, window, commodity, and site constraints decide the plan. We build the move around your freight.</p>
+              <p className="text-sm text-slate-400">Length, width, height, tarp, and dock access decide the deck. We build the move around the piece.</p>
             </article>
             <article className="border border-slate-800 rounded-2xl p-6 space-y-2">
               <h3 className="font-bold text-amber-400">Customer-centric service</h3>
@@ -107,7 +110,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto grid gap-8 md:grid-cols-2">
           <div className="space-y-3">
             <h2 className="text-2xl font-black">For shippers</h2>
-            <p className="text-slate-400">Need freight that shows up. Missed pickups and silent dispatch are not a strategy.</p>
+            <p className="text-slate-400">Need open-deck coverage that shows up. Missed pickups and silent dispatch are not a strategy.</p>
             <Link href="/shippers" className="text-amber-400 font-semibold hover:text-amber-300">
               Ship with us →
             </Link>

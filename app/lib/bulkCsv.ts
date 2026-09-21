@@ -1,3 +1,5 @@
+import { EQUIPMENT_CODES } from './openDeck';
+
 export type BulkRow = {
   customer_id: string | null;
   origin_city: string | null;
@@ -17,6 +19,12 @@ export type BulkRow = {
   rate: number;
   commodity: string | null;
   load_comments: string | null;
+  length_ft: number | null;
+  width_ft: number | null;
+  height_ft: number | null;
+  tarp_size: string | null;
+  chains_required: boolean;
+  straps_required: boolean;
 };
 
 function idx(headers: string[], name: string) {
@@ -26,6 +34,10 @@ function idx(headers: string[], name: string) {
 function cell(cols: string[], i: number) {
   if (i < 0 || i >= cols.length) return '';
   return (cols[i] || '').trim();
+}
+
+function yn(value: string) {
+  return ['Y', 'YES', 'TRUE', '1'].includes(value.toUpperCase());
 }
 
 export function parseBulkCsv(text: string): BulkRow[] {
@@ -38,9 +50,14 @@ export function parseBulkCsv(text: string): BulkRow[] {
     const originZip = cell(cols, idx(headers, 'origin zip')) || cell(cols, idx(headers, 'origin_zip'));
     const destZip = cell(cols, idx(headers, 'destination zip')) || cell(cols, idx(headers, 'dest zip'));
     if (!originZip || !destZip) continue;
-    const equipment = (cell(cols, idx(headers, 'equipment 1')) || cell(cols, idx(headers, 'equipment')) || 'VAN').toUpperCase();
+    const rawEquip = (
+      cell(cols, idx(headers, 'equipment_required')) ||
+      cell(cols, idx(headers, 'equipment 1')) ||
+      cell(cols, idx(headers, 'equipment')) ||
+      'FLATBED'
+    ).toUpperCase();
+    const equipment = EQUIPMENT_CODES.includes(rawEquip as (typeof EQUIPMENT_CODES)[number]) ? rawEquip : 'FLATBED';
     const pickupFrom = cell(cols, idx(headers, 'pickup date (from)')) || cell(cols, idx(headers, 'pickup'));
-    const pickupThru = cell(cols, idx(headers, 'pickup date (thru)')) || pickupFrom;
     rows.push({
       customer_id: cell(cols, idx(headers, 'customer')) || null,
       origin_city: cell(cols, idx(headers, 'origin city')) || null,
@@ -50,7 +67,7 @@ export function parseBulkCsv(text: string): BulkRow[] {
       destination_zip: destZip,
       destination_country: cell(cols, idx(headers, 'destination country')) || 'US',
       pickup_date_from: pickupFrom || null,
-      pickup_date_thru: pickupThru || null,
+      pickup_date_thru: cell(cols, idx(headers, 'pickup date (thru)')) || pickupFrom || null,
       delivery_date_from: cell(cols, idx(headers, 'delivery date (from)')) || null,
       delivery_date_thru: cell(cols, idx(headers, 'delivery date (thru)')) || null,
       equipment_1: equipment,
@@ -60,20 +77,15 @@ export function parseBulkCsv(text: string): BulkRow[] {
       rate: Number(cell(cols, idx(headers, 'rate')) || 0),
       commodity: cell(cols, idx(headers, 'commodity')) || null,
       load_comments: cell(cols, idx(headers, 'comments')) || null,
+      length_ft: Number(cell(cols, idx(headers, 'length_ft')) || cell(cols, idx(headers, 'length'))) || null,
+      width_ft: Number(cell(cols, idx(headers, 'width_ft')) || cell(cols, idx(headers, 'width'))) || null,
+      height_ft: Number(cell(cols, idx(headers, 'height_ft')) || cell(cols, idx(headers, 'height'))) || null,
+      tarp_size: (cell(cols, idx(headers, 'tarp_size')) || cell(cols, idx(headers, 'tarp')) || 'NONE').toUpperCase(),
+      chains_required: yn(cell(cols, idx(headers, 'chains'))),
+      straps_required: yn(cell(cols, idx(headers, 'straps'))),
     });
   }
   return rows;
 }
 
-export const COMMODITIES = [
-  'General Freight',
-  'Auto Parts',
-  'Building Materials',
-  'Electronics',
-  'Food / FSMA',
-  'Machinery',
-  'Metals',
-  'Paper',
-  'Plastics / Rubber',
-  'Other',
-];
+export { COMMODITIES } from './openDeck';

@@ -6,6 +6,7 @@ import { PageShell } from '../../components/PageShell';
 import { TrackingMap } from '../../components/TrackingMap';
 import { getSupabase, trackingStarted, type LoadRecord } from '../../lib/supabaseBrowser';
 import { dashboardPath, useAuth } from '../../lib/useAuth';
+import { EQUIPMENT, TARP_OPTIONS } from '../../lib/openDeck';
 
 const STEPS = [
   { status: 'ACCEPTED', label: 'Accepted at origin' },
@@ -20,6 +21,17 @@ export default function CarrierDashboard() {
   const [mine, setMine] = useState<LoadRecord[]>([]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
+  const [deckFilter, setDeckFilter] = useState('');
+  const [tarpFilter, setTarpFilter] = useState('');
+  const [maxWeight, setMaxWeight] = useState('');
+  const [specs, setSpecs] = useState({
+    deck_type: 'FLATBED',
+    deck_length_ft: '48',
+    ramp_available: false,
+    tarp_sizes: '4FT,8FT',
+    strap_count: '12',
+    chain_count: '8',
+  });
 
   useEffect(() => {
     if (!ready) return;
@@ -29,6 +41,16 @@ export default function CarrierDashboard() {
     }
     if (profile && profile.role !== 'CARRIER') {
       router.replace(dashboardPath(profile.role));
+    }
+    if (profile?.role === 'CARRIER') {
+      setSpecs({
+        deck_type: profile.deck_type || 'FLATBED',
+        deck_length_ft: String(profile.deck_length_ft || 48),
+        ramp_available: Boolean(profile.ramp_available),
+        tarp_sizes: profile.tarp_sizes || '4FT,8FT',
+        strap_count: String(profile.strap_count || 12),
+        chain_count: String(profile.chain_count || 8),
+      });
     }
   }, [ready, user, profile, router]);
 
@@ -81,6 +103,32 @@ export default function CarrierDashboard() {
     if (upd) setError(upd.message);
   }
 
+  async function saveSpecs(e: React.FormEvent) {
+    e.preventDefault();
+    const supabase = getSupabase();
+    if (!supabase || !user) return;
+    const { error: upd } = await supabase
+      .from('profiles')
+      .update({
+        deck_type: specs.deck_type,
+        deck_length_ft: Number(specs.deck_length_ft) || null,
+        ramp_available: specs.ramp_available,
+        tarp_sizes: specs.tarp_sizes,
+        strap_count: Number(specs.strap_count) || null,
+        chain_count: Number(specs.chain_count) || null,
+      })
+      .eq('id', user.id);
+    if (upd) setError(upd.message);
+  }
+
+  const filtered = board.filter((load) => {
+    const deck = (load.equipment_1 || load.freight_type || '').toUpperCase();
+    if (deckFilter && deck !== deckFilter) return false;
+    if (tarpFilter && String((load as { tarp_size?: string }).tarp_size || '').toUpperCase() !== tarpFilter) return false;
+    if (maxWeight && Number(load.weight || 0) > Number(maxWeight)) return false;
+    return true;
+  });
+
   if (!ready || !user || profile?.role !== 'CARRIER') {
     return <div className="min-h-screen bg-slate-950 text-slate-500 p-8">Loading load board…</div>;
   }
@@ -99,12 +147,93 @@ export default function CarrierDashboard() {
         </header>
         {error ? <p className="text-sm text-red-400">{error}</p> : null}
 
+        <form onSubmit={saveSpecs} className="grid md:grid-cols-3 gap-3 border border-slate-800 rounded-2xl p-6">
+          <h2 className="md:col-span-3 text-lg font-bold">Your open-deck specs</h2>
+          <select
+            className="bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm"
+            value={specs.deck_type}
+            onChange={(e) => setSpecs({ ...specs, deck_type: e.target.value })}
+          >
+            {EQUIPMENT.map((eq) => (
+              <option key={eq.code} value={eq.code}>
+                {eq.label}
+              </option>
+            ))}
+          </select>
+          <input
+            className="bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm"
+            placeholder="Deck length ft"
+            value={specs.deck_length_ft}
+            onChange={(e) => setSpecs({ ...specs, deck_length_ft: e.target.value })}
+          />
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={specs.ramp_available}
+              onChange={(e) => setSpecs({ ...specs, ramp_available: e.target.checked })}
+            />
+            Ramp available
+          </label>
+          <input
+            className="bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm"
+            placeholder="Tarp sizes (4FT,8FT)"
+            value={specs.tarp_sizes}
+            onChange={(e) => setSpecs({ ...specs, tarp_sizes: e.target.value })}
+          />
+          <input
+            className="bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm"
+            placeholder="Strap count"
+            value={specs.strap_count}
+            onChange={(e) => setSpecs({ ...specs, strap_count: e.target.value })}
+          />
+          <input
+            className="bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm"
+            placeholder="Chain count"
+            value={specs.chain_count}
+            onChange={(e) => setSpecs({ ...specs, chain_count: e.target.value })}
+          />
+          <button className="md:col-span-3 bg-slate-800 border border-slate-700 font-bold py-2 rounded-lg">Save specs</button>
+        </form>
+
+        <div className="flex flex-wrap gap-3">
+          <select
+            className="bg-slate-950 border border-slate-800 rounded-lg p-2 text-sm"
+            value={deckFilter}
+            onChange={(e) => setDeckFilter(e.target.value)}
+          >
+            <option value="">All deck types</option>
+            {EQUIPMENT.map((eq) => (
+              <option key={eq.code} value={eq.code}>
+                {eq.code}
+              </option>
+            ))}
+          </select>
+          <select
+            className="bg-slate-950 border border-slate-800 rounded-lg p-2 text-sm"
+            value={tarpFilter}
+            onChange={(e) => setTarpFilter(e.target.value)}
+          >
+            <option value="">Any tarp</option>
+            {TARP_OPTIONS.map((opt) => (
+              <option key={opt.code} value={opt.code}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <input
+            className="bg-slate-950 border border-slate-800 rounded-lg p-2 text-sm"
+            placeholder="Max weight lbs"
+            value={maxWeight}
+            onChange={(e) => setMaxWeight(e.target.value)}
+          />
+        </div>
+
         <div className="space-y-4">
           <h2 className="text-lg font-bold">AVAILABLE freight</h2>
-          {board.length === 0 ? (
+          {filtered.length === 0 ? (
             <p className="text-slate-500">No open loads. Check back with dispatch at (702) 744-6957.</p>
           ) : (
-            board.map((load) => (
+            filtered.map((load) => (
               <article key={load.id} className="border border-slate-800 rounded-2xl p-5 flex flex-wrap justify-between gap-4">
                 <div>
                   <p className="font-bold">

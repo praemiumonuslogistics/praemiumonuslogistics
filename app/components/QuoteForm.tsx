@@ -1,21 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { submitQuoteAction } from '../actions/submitQuote';
 import { AddressFields } from './AddressFields';
 import { formatAddress, isCompleteAddress, type AddressParts } from '../lib/address';
-import { COMMODITIES } from '../lib/bulkCsv';
-
-const EQUIPMENT = [
-  'Dry van',
-  'Flatbed',
-  'Step deck',
-  'Reefer',
-  'Hotshot',
-  'LTL',
-  'Heavy haul / RGN',
-  'Not sure',
-];
+import {
+  COMMODITIES,
+  EQUIPMENT,
+  LOADING_ACCESS,
+  OPEN_DECK_DISCLAIMER,
+  TARP_OPTIONS,
+  flagsForDims,
+} from '../lib/openDeck';
 
 const inputClass =
   'w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-amber-400';
@@ -30,14 +26,28 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
   const [role, setRole] = useState('Shipper');
   const [origin, setOrigin] = useState<AddressParts>(emptyAddress);
   const [destination, setDestination] = useState<AddressParts>(emptyAddress);
-  const [freightType, setFreightType] = useState('Dry van');
+  const [freightType, setFreightType] = useState('FLATBED');
   const [weight, setWeight] = useState('');
   const [pickupDate, setPickupDate] = useState('');
-  const [commodity, setCommodity] = useState('General Freight');
+  const [commodity, setCommodity] = useState('Structural Steel');
+  const [lengthFt, setLengthFt] = useState('');
+  const [widthFt, setWidthFt] = useState('');
+  const [heightFt, setHeightFt] = useState('');
+  const [tarpSize, setTarpSize] = useState('NONE');
+  const [chains, setChains] = useState(false);
+  const [straps, setStraps] = useState(true);
+  const [edgeProtectors, setEdgeProtectors] = useState(false);
+  const [coilRacks, setCoilRacks] = useState(false);
+  const [levelers, setLevelers] = useState(false);
+  const [loadingAccess, setLoadingAccess] = useState(LOADING_ACCESS[1]);
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const widthNum = Number(widthFt) || 0;
+  const heightNum = Number(heightFt) || 0;
+  const flags = useMemo(() => flagsForDims(widthNum, heightNum, freightType), [widthNum, heightNum, freightType]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +57,10 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
     }
     if (variant === 'compact' && (!(origin.zip || '').trim() || !(destination.zip || '').trim())) {
       setError('Origin ZIP and destination ZIP are required.');
+      return;
+    }
+    if (!lengthFt || !widthFt || !heightFt) {
+      setError('Piece length, width, and height are required for open-deck quoting.');
       return;
     }
     setLoading(true);
@@ -69,6 +83,16 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
       weight,
       pickupDate,
       commodity,
+      lengthFt,
+      widthFt,
+      heightFt,
+      tarpSize,
+      chainsRequired: chains,
+      strapsRequired: straps,
+      edgeProtectors,
+      coilRacks,
+      levelers,
+      loadingAccess,
       notes,
     });
     setLoading(false);
@@ -84,7 +108,7 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
   if (submitted) {
     return (
       <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-6 rounded-xl space-y-2">
-        <h3 className="font-bold text-lg">Request received.</h3>
+        <h3 className="font-bold text-lg">Open-deck request received.</h3>
         <p className="text-sm text-slate-300">
           Thank you. A Praemium Onus dispatcher will reply to {contactEmail} and {contactPhone}. Lane:{' '}
           <strong>{formatAddress(origin)}</strong> to <strong>{formatAddress(destination)}</strong>.
@@ -95,11 +119,12 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <p className="text-xs text-slate-500">{OPEN_DECK_DISCLAIMER}</p>
       {variant === 'full' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-semibold text-slate-400 block mb-1">Full name</label>
-            <input required className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="Jordan Hale" />
+            <input required className={inputClass} value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-400 block mb-1">I am a</label>
@@ -142,12 +167,12 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label className="text-xs font-semibold text-slate-400 block mb-1">Equipment</label>
+        <div className="sm:col-span-2">
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Open-deck equipment</label>
           <select className={inputClass} value={freightType} onChange={(e) => setFreightType(e.target.value)}>
             {EQUIPMENT.map((eq) => (
-              <option key={eq} value={eq}>
-                {eq}
+              <option key={eq.code} value={eq.code}>
+                {eq.label}
               </option>
             ))}
           </select>
@@ -163,53 +188,104 @@ export function QuoteForm({ variant = 'full' }: { variant?: 'full' | 'compact' }
           </select>
         </div>
         <div>
-          <label className="text-xs font-semibold text-slate-400 block mb-1">Weight (lbs)</label>
-          <input required className={inputClass} value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="e.g. 42,000" />
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Total weight (lbs)</label>
+          <input required className={inputClass} value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="42000" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Piece length (ft)</label>
+          <input required className={inputClass} value={lengthFt} onChange={(e) => setLengthFt(e.target.value)} placeholder="40" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Piece width (ft)</label>
+          <input required className={inputClass} value={widthFt} onChange={(e) => setWidthFt(e.target.value)} placeholder="8.5" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-400 block mb-1">Piece height (ft)</label>
+          <input required className={inputClass} value={heightFt} onChange={(e) => setHeightFt(e.target.value)} placeholder="8" />
         </div>
         <div>
           <label className="text-xs font-semibold text-slate-400 block mb-1">Pickup date</label>
           <input type="date" required className={inputClass} value={pickupDate} onChange={(e) => setPickupDate(e.target.value)} />
         </div>
       </div>
+      {flags.oversize ? (
+        <p className="text-xs text-amber-300">Width over 8.5 ft — oversize / permits likely.</p>
+      ) : null}
+      {flags.stepdeckRequired ? (
+        <p className="text-xs text-amber-300">Deck + height exceeds 13.6 ft on a standard flatbed — stepdeck or RGN required.</p>
+      ) : null}
+
+      <div>
+        <label className="text-xs font-semibold text-slate-400 block mb-1">Tarping</label>
+        <select className={inputClass} value={tarpSize} onChange={(e) => setTarpSize(e.target.value)}>
+          {TARP_OPTIONS.map((opt) => (
+            <option key={opt.code} value={opt.code}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-sm text-slate-300">
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={chains} onChange={(e) => setChains(e.target.checked)} />
+          Chains & binders
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={straps} onChange={(e) => setStraps(e.target.checked)} />
+          4-inch straps
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={edgeProtectors} onChange={(e) => setEdgeProtectors(e.target.checked)} />
+          Edge protectors
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={coilRacks} onChange={(e) => setCoilRacks(e.target.checked)} />
+          Coil racks
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={levelers} onChange={(e) => setLevelers(e.target.checked)} />
+          Levelers / ramps
+        </label>
+      </div>
+      <div>
+        <label className="text-xs font-semibold text-slate-400 block mb-1">Loading / unloading</label>
+        <select className={inputClass} value={loadingAccess} onChange={(e) => setLoadingAccess(e.target.value)}>
+          {LOADING_ACCESS.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div>
         <label className="text-xs font-semibold text-slate-400 block mb-1">Company</label>
-        <input required className={inputClass} value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Company name" />
+        <input required className={inputClass} value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
       </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="text-xs font-semibold text-slate-400 block mb-1">Email</label>
-          <input type="email" required className={inputClass} value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="name@company.com" />
+          <input type="email" required className={inputClass} value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
         </div>
         <div>
           <label className="text-xs font-semibold text-slate-400 block mb-1">Phone</label>
-          <input type="tel" required className={inputClass} value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="Include area code" />
+          <input type="tel" required className={inputClass} value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
         </div>
       </div>
-
-      {variant === 'full' && (
+      {variant === 'full' ? (
         <div>
           <label className="text-xs font-semibold text-slate-400 block mb-1">Notes</label>
-          <textarea
-            className={`${inputClass} min-h-24`}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Pieces, hours, constraints"
-          />
+          <textarea className={`${inputClass} min-h-24`} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
-      )}
-
+      ) : null}
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
-
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black py-4 rounded-xl text-base shadow-lg disabled:opacity-50"
+        className="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black py-4 rounded-xl text-base disabled:opacity-50"
       >
-        {loading ? 'Sending…' : 'Send quote request'}
+        {loading ? 'Sending…' : 'Send open-deck quote'}
       </button>
-      <p className="text-xs text-slate-500">We use this information to price and plan the shipment. We do not sell your details.</p>
     </form>
   );
 }

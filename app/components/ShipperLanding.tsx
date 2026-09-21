@@ -94,11 +94,11 @@ export function ShipperLanding() {
       <section className="space-y-6">
         <p className="text-xs font-semibold tracking-[0.2em] text-amber-400 uppercase">Shipper visibility</p>
         <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight">
-          Real-time GPS freight intelligence. Total lane visibility.
+          Specialized flatbed &amp; stepdeck coverage. Precision securement &amp; live highway GPS.
         </h1>
         <p className="text-lg text-slate-400 max-w-3xl">
-          No manual check-calls. Unfiltered satellite tracking, automated status triggers, and instant digital BOL/POD
-          capture.
+          Exclusively serving Open-Deck Freight: Standard Flatbeds (48 ft / 53 ft), Stepdecks, Dropdecks, Conestogas,
+          and RGN Heavy Haul. No check-calls. Dimensions, tarps, and GPS on the file.
         </p>
         <form onSubmit={track} className="flex flex-col sm:flex-row gap-2 max-w-2xl">
           <input
@@ -173,8 +173,8 @@ export function ShipperLanding() {
         ) : (
           <div className="space-y-4">
             <p className="text-sm text-slate-300">
-              Please sign in or create a shipper account to upload bulk loads. Uploaded loads must be attached to an
-              authenticated account so you can manage them in your dashboard.
+              Please sign in or create a shipper account to upload bulk flatbed/stepdeck orders. Uploaded loads must be
+              attached to an authenticated account so you can manage them in your dashboard.
             </p>
             <div className="flex flex-wrap gap-3">
               <a
@@ -224,8 +224,8 @@ export function ShipperLanding() {
           <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
             <h3 className="text-xl font-black">Sign in required</h3>
             <p className="text-sm text-slate-300">
-              Please sign in or create a shipper account to upload bulk loads. Uploaded loads must be attached to an
-              authenticated account so you can manage them in your dashboard.
+              Please sign in or create a shipper account to upload bulk flatbed/stepdeck orders. Uploaded loads must be
+              attached to an authenticated account so you can manage them in your dashboard.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/login" className="bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-lg">

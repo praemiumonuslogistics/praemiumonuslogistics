@@ -9,6 +9,12 @@ export type Profile = {
   company_name: string;
   role: 'SHIPPER' | 'CARRIER' | 'AGENT';
   phone_number: string | null;
+  deck_type?: string | null;
+  deck_length_ft?: number | null;
+  ramp_available?: boolean | null;
+  tarp_sizes?: string | null;
+  strap_count?: number | null;
+  chain_count?: number | null;
 };
 
 export function dashboardPath(role?: string | null) {

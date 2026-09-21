@@ -45,7 +45,7 @@ export function SiteHeader() {
               </Link>
             ))}
             <span className="hidden xl:inline text-xs font-semibold px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-300">
-              Landstar Agent GNV
+              Flatbed &amp; Stepdeck · GNV
             </span>
             <a href="tel:+17027446957" className="hidden md:inline text-amber-400 hover:text-amber-300 font-semibold">
               (702) 744-6957

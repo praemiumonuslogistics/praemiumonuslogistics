@@ -75,6 +75,18 @@ alter table public.loads add column if not exists source text;
 alter table public.loads add column if not exists shipper_id uuid;
 alter table public.loads add column if not exists carrier_id uuid;
 alter table public.loads add column if not exists yard_line integer not null default 0;
+alter table public.loads add column if not exists length_ft numeric;
+alter table public.loads add column if not exists width_ft numeric;
+alter table public.loads add column if not exists height_ft numeric;
+alter table public.loads add column if not exists tarp_size text;
+alter table public.loads add column if not exists chains_required boolean;
+alter table public.loads add column if not exists straps_required boolean;
+alter table public.loads add column if not exists edge_protectors boolean;
+alter table public.loads add column if not exists coil_racks boolean;
+alter table public.loads add column if not exists levelers boolean;
+alter table public.loads add column if not exists loading_access text;
+alter table public.loads add column if not exists oversize_flag boolean;
+alter table public.loads add column if not exists stepdeck_required_flag boolean;
 
 create table if not exists public.profiles (
   id uuid primary key references auth.users on delete cascade,

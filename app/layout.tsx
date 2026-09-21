@@ -7,21 +7,20 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   metadataBase: new URL('https://praemiumonuslogistics.vercel.app'),
   title: {
-    default: 'Praemium Onus Logistics | Freight Brokerage',
+    default: 'Praemium Onus Logistics | Flatbed & Stepdeck',
     template: '%s | Praemium Onus Logistics',
   },
   description:
-    'Las Vegas freight brokerage for FTL, LTL, and expedited freight. Landstar Agent GNV. Top-tier carriers. Every shipment tailored.',
+    'Las Vegas open-deck brokerage. Flatbed, stepdeck, Conestoga, and RGN. Landstar Agent GNV.',
   keywords: [
     'Praemium Onus Logistics',
-    'Freight Broker',
-    'Landstar Agent',
-    'Logistics Services',
-    'Dry Van Shipping',
     'Flatbed Freight',
+    'Stepdeck',
+    'RGN Heavy Haul',
+    'Landstar Agent',
+    'Open Deck',
     'GPS Freight Tracking',
     'Las Vegas Freight Agent',
-    'Heavy Haul Transport',
   ],
   authors: [{ name: 'Praemium Onus Logistics' }],
   creator: 'Praemium Onus Logistics',

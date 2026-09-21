@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PageShell } from '../components/PageShell';
+import { OPEN_DECK_DISCLAIMER } from '../lib/openDeck';
 
 export const metadata: Metadata = {
-  title: 'Carrier Partners | Praemium Onus',
-  description:
-    'Haul with Praemium Onus Logistics. Professional freight, fair communication, Texas and national lanes. Clear rates. Professional dispatch.',
+  title: 'Open-Deck Carriers | Praemium Onus',
+  description: 'Haul flatbed, stepdeck, Conestoga, and RGN freight with Praemium Onus Logistics. Landstar Agent GNV.',
 };
 
 export default function CarriersPage() {
@@ -14,10 +14,8 @@ export default function CarriersPage() {
       <section className="max-w-3xl mx-auto px-4 md:px-8 py-16 space-y-10">
         <div className="space-y-4">
           <p className="text-xs font-semibold tracking-[0.2em] text-amber-400 uppercase">Carrier partners</p>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight">Get loaded. Clear rates. Direct dispatch.</h1>
-          <p className="text-lg text-slate-400">
-            We work with carriers and owner-operators who want professional freight and adults on the phone. Browse AVAILABLE lanes, accept a load, and advance the field.
-          </p>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight">Open-deck trucks. Direct dispatch.</h1>
+          <p className="text-lg text-slate-400">{OPEN_DECK_DISCLAIMER}</p>
           <div className="flex flex-wrap gap-3">
             <Link href="/signup" className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-3 rounded-lg">
               Register as a carrier
@@ -27,34 +25,24 @@ export default function CarriersPage() {
             </Link>
           </div>
         </div>
-
         <p className="text-slate-300 leading-relaxed">
-          Praemium Onus Logistics tenders freight we have scoped. You will not get a moving target at the dock because we skipped the questions. Texas lanes are part of the work. So is national coverage. We do not post rates we cannot stand behind.
+          We tender freight with dimensions, tarp size, and securement already on the file. You will not find a van load
+          on this board. On signup we ask for deck length, ramp, tarp sizes, and strap/chain counts so the match is real.
         </p>
-
         <ul className="space-y-3 text-slate-300">
           <li>
-            <strong className="text-white">Professional freight</strong> — Accurate weight, equipment, and accessorials before you commit. No surprise freight at the shipper.
+            <strong className="text-white">Deck type</strong> — Flatbed, stepdeck, RGN, or Conestoga. Filter the board by
+            what you actually run.
           </li>
           <li>
-            <strong className="text-white">Fair communication</strong> — A person who knows the load. Status that goes both ways. Problems handled, not forwarded into the void.
+            <strong className="text-white">Tarps and iron</strong> — 4-ft, 8-ft, chains, straps. Stated before you accept.
           </li>
           <li>
-            <strong className="text-white">Texas and national lanes</strong> — We cover Texas runs and lanes across the country. Live freight is tendered directly.
+            <strong className="text-white">Weight and permits</strong> — Over 8.5 ft width is flagged. No surprise oversize
+            at the shipper.
           </li>
         </ul>
-
-        <p className="text-sm text-slate-500">
-          Pay terms are confirmed on setup. We do not publish terms we cannot verify on this page.
-        </p>
-
-        <div className="space-y-2">
-          <h2 className="text-xl font-bold">Want the next conversation to be a real load.</h2>
-          <p className="text-slate-400 text-sm">Register for the board, or use the quote form and select role: Carrier. Pay terms are confirmed on setup.</p>
-          <Link href="/quote" className="inline-block border border-slate-700 hover:border-amber-400 px-5 py-3 rounded-lg font-semibold">
-            Talk with dispatch
-          </Link>
-        </div>
+        <p className="text-sm text-slate-500">Pay terms are confirmed on setup. We do not publish terms we cannot verify.</p>
       </section>
     </PageShell>
   );

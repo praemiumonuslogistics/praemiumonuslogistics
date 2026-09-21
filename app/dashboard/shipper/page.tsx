@@ -23,12 +23,12 @@ export default function ShipperDashboard() {
     originZip: '',
     destinationCity: '',
     destinationZip: '',
-    equipment: 'VAN',
+    equipment: 'FLATBED',
     weight: '',
     rate: '',
     pickup: '',
     delivery: '',
-    commodity: 'General Freight',
+    commodity: 'Structural Steel',
   });
 
   useEffect(() => {
@@ -114,7 +114,7 @@ export default function ShipperDashboard() {
       rate: '',
       pickup: '',
       delivery: '',
-      commodity: 'General Freight',
+      commodity: 'Structural Steel',
     });
   }
 
