@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getSupabase, trackingStarted, type LoadRecord } from '../../../lib/supabaseBrowser';
 import { LoadAddress, LoadDocs, ProofChips } from '../../../components/LoadProof';
 import { TrackingMap } from '../../../components/TrackingMap';
+import { FootballField } from '../../../components/FootballField';
 
 export default function ShipperTrackingPortal({
   params,
@@ -112,6 +113,8 @@ export default function ShipperTrackingPortal({
         </div>
 
         <div className="p-6 md:p-8 bg-slate-950 space-y-4">
+          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Field progress</h2>
+          <FootballField load={load} />
           <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Live map</h2>
           <TrackingMap lat={load.current_lat} lng={load.current_lng} started={trackingStarted(load)} />
           <LoadDocs load={load} />

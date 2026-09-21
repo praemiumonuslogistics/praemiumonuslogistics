@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PageShell } from '../components/PageShell';
+import { FootballField } from '../components/FootballField';
 
 export const metadata: Metadata = {
   title: 'Freight for Shippers | Praemium Onus',
@@ -13,10 +14,25 @@ export default function ShippersPage() {
     <PageShell>
       <section className="max-w-3xl mx-auto px-4 md:px-8 py-16 space-y-10">
         <div className="space-y-4">
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight">Your freight should not go quiet.</h1>
+          <p className="text-xs font-semibold tracking-[0.2em] text-amber-400 uppercase">Shipper coverage</p>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight">Instant freight coverage. Real-time touchdown tracking.</h1>
           <p className="text-lg text-slate-400">
-            Shippers come to us after missed pickups, opaque rates, and days without a useful update. We run the opposite process.
+            Shippers come to us after missed pickups, opaque rates, and days without a useful update. We run the opposite process — quote, match, execute, and show the field.
           </p>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/signup" className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-3 rounded-lg">
+              Create shipper account
+            </Link>
+            <Link href="/quote" className="border border-slate-700 hover:border-amber-400 px-5 py-3 rounded-lg font-semibold">
+              Request a quote
+            </Link>
+          </div>
+        </div>
+
+        <div className="border border-slate-800 rounded-2xl bg-slate-900/40 p-6 space-y-3">
+          <h2 className="text-xl font-bold">Live football-field demo</h2>
+          <p className="text-sm text-slate-400">Origin to destination as a 100-yard drive. Your loads use the same view after pickup.</p>
+          <FootballField demo />
         </div>
 
         <div className="space-y-4">

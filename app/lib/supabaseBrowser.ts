@@ -2,11 +2,18 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
+let client: SupabaseClient | null | undefined;
+
 export function getSupabase(): SupabaseClient | null {
+  if (client !== undefined) return client;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key);
+  if (!url || !key) {
+    client = null;
+    return client;
+  }
+  client = createClient(url, key);
+  return client;
 }
 
 export type LoadRecord = {
@@ -41,12 +48,22 @@ export type LoadRecord = {
   pickup_confirmed_at?: string | null;
   delivered_at?: string | null;
   tracking_hash: string | null;
+  shipper_id?: string | null;
+  carrier_id?: string | null;
+  yard_line?: number | null;
+  equipment_1?: string | null;
+  freight_type?: string | null;
+  weight?: string | null;
+  rate?: number | null;
+  rate_type?: string | null;
+  pickup_date_from?: string | null;
 };
 
 export function trackingStarted(load: LoadRecord) {
   return Boolean(
     load.pickup_confirmed_at ||
       load.status === 'IN_TRANSIT' ||
-      load.status === 'DELIVERED'
+      load.status === 'DELIVERED' ||
+      (typeof load.yard_line === 'number' && load.yard_line >= 25)
   );
 }

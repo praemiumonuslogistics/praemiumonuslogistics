@@ -46,8 +46,51 @@ alter table public.loads add column if not exists pickup_photo_urls text[] not n
 alter table public.loads add column if not exists pickup_confirmed_at timestamptz;
 alter table public.loads add column if not exists delivered_at timestamptz;
 
+-- Landstar TMS bulk posting fields (praemiumonuslogisticsbulklistings.xlsx)
+alter table public.loads add column if not exists customer_id text;
+alter table public.loads add column if not exists posting_callback_phone text;
+alter table public.loads add column if not exists origin_country text;
+alter table public.loads add column if not exists destination_country text;
+alter table public.loads add column if not exists pickup_date_from date;
+alter table public.loads add column if not exists pickup_date_thru date;
+alter table public.loads add column if not exists delivery_date_from date;
+alter table public.loads add column if not exists delivery_date_thru date;
+alter table public.loads add column if not exists load_posting_code text;
+alter table public.loads add column if not exists visibility_code text;
+alter table public.loads add column if not exists bill_as_miles numeric;
+alter table public.loads add column if not exists equipment_1 text;
+alter table public.loads add column if not exists equipment_2 text;
+alter table public.loads add column if not exists equipment_3 text;
+alter table public.loads add column if not exists rate_type text;
+alter table public.loads add column if not exists rate numeric;
+alter table public.loads add column if not exists commodity text;
+alter table public.loads add column if not exists brokerable boolean;
+alter table public.loads add column if not exists carrier_amt numeric;
+alter table public.loads add column if not exists carrier_load_alerts text;
+alter table public.loads add column if not exists load_attributes text;
+alter table public.loads add column if not exists load_comments text;
+alter table public.loads add column if not exists fuel_surcharge_rate_type text;
+alter table public.loads add column if not exists fuel_surcharge numeric;
+alter table public.loads add column if not exists source text;
+alter table public.loads add column if not exists shipper_id uuid;
+alter table public.loads add column if not exists carrier_id uuid;
+alter table public.loads add column if not exists yard_line integer not null default 0;
+
+create table if not exists public.profiles (
+  id uuid primary key references auth.users on delete cascade,
+  company_name text not null default '',
+  role text not null check (role in ('SHIPPER', 'CARRIER', 'AGENT')),
+  phone_number text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.profiles enable row level security;
+
 create index if not exists loads_status_idx on public.loads (status);
 create index if not exists loads_created_at_idx on public.loads (created_at desc);
+create index if not exists loads_origin_zip_idx on public.loads (origin_zip);
+create index if not exists loads_pickup_date_from_idx on public.loads (pickup_date_from);
+create index if not exists loads_source_idx on public.loads (source);
 
 alter table public.loads enable row level security;
 

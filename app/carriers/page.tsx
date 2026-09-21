@@ -13,10 +13,19 @@ export default function CarriersPage() {
     <PageShell>
       <section className="max-w-3xl mx-auto px-4 md:px-8 py-16 space-y-10">
         <div className="space-y-4">
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight">Clean freight. Direct dispatch.</h1>
+          <p className="text-xs font-semibold tracking-[0.2em] text-amber-400 uppercase">Carrier partners</p>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight">Get loaded. Clear rates. Direct dispatch.</h1>
           <p className="text-lg text-slate-400">
-            We work with carriers and owner-operators who want professional freight and adults on the phone. Clear rates. Professional dispatch.
+            We work with carriers and owner-operators who want professional freight and adults on the phone. Browse AVAILABLE lanes, accept a load, and advance the field.
           </p>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/signup" className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-3 rounded-lg">
+              Register as a carrier
+            </Link>
+            <Link href="/login" className="border border-slate-700 hover:border-amber-400 px-5 py-3 rounded-lg font-semibold">
+              Browse loads
+            </Link>
+          </div>
         </div>
 
         <p className="text-slate-300 leading-relaxed">
@@ -41,8 +50,8 @@ export default function CarriersPage() {
 
         <div className="space-y-2">
           <h2 className="text-xl font-bold">Want the next conversation to be a real load.</h2>
-          <p className="text-slate-400 text-sm">Use the quote form. Select role: Carrier.</p>
-          <Link href="/quote" className="inline-block bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-3 rounded-lg">
+          <p className="text-slate-400 text-sm">Register for the board, or use the quote form and select role: Carrier. Pay terms are confirmed on setup.</p>
+          <Link href="/quote" className="inline-block border border-slate-700 hover:border-amber-400 px-5 py-3 rounded-lg font-semibold">
             Talk with dispatch
           </Link>
         </div>
